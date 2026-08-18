@@ -23,5 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# Oversized unused asset (604MB, exceeds GitHub 100MB limit)
+# 604MB master render, exceeds GitHub 100MB limit. The web encode lives at
+# public/videos/revolt-96sec.mp4 (41MB, libx264 crf 24). Keep the master local.
 src/assets/images/REVOLT 96SEC.mp4
