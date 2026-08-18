@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------
+   Design tokens. Anything defined in @theme becomes a Tailwind
+   utility automatically, e.g. `bg-brand-500`, `font-display`.
+   Adjust these once and the whole site follows.
+---------------------------------------------------------------- */
+@theme {
+  --color-brand-50: #fff1f1;
+  --color-brand-100: #ffdfdf;
+  --color-brand-200: #ffc5c5;
+  --color-brand-300: #ff9d9d;
+  --color-brand-400: #ff6464;
+  --color-brand-500: #f43333;
+  --color-brand-600: #e11919;
+  --color-brand-700: #bd1111;
+  --color-brand-800: #9c1313;
+  --color-brand-900: #811717;
+
+  /* Secondary accent — the electric side of the palette. Used sparingly
+     against brand red so the youth-facing surfaces have two poles. */
+  --color-volt-300: #b8ff5c;
+  --color-volt-400: #9bf218;
+  --color-volt-500: #7ed321;
+
+  --color-ink-50: #f6f6f7;
+  --color-ink-500: #6b6b70;
+  --color-ink-800: #1f1f22;
+  --color-ink-900: #121214;
+  /* Deepest surface — reserved for OLED-black hero/cta sections. */
+  --color-ink-950: #050505;
+
+  /* One family across the site. Both tokens stay so call sites keep reading
+     `font-display` for headings and `font-body` for prose — swapping a face
+     later is a two-line change here, not a sweep through every component. */
+  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* The only continuous animation on the site. Everything else is either a
+     one-shot entrance or a hover state. */
+  --animate-marquee: marquee 38s linear infinite;
+
+  /* Re-entry for content that swaps in place (spec values on the lineup
+     selector). Keyed remounts replay it. */
+  --animate-rise: rise 0.5s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.5rem, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-white font-body text-ink-800 antialiased;
+  }
+
+  /* Respect the OS setting — the hero leans hard on motion. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Film grain for the dark photographic bands. The hero plates are high-key
+   daylight frames — a flat scrim over one lands as grey haze with visible webp
+   banding in the sky, so the scrims get texture rather than more opacity. */
+@utility grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
