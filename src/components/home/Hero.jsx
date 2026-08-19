@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronRight } from '@/components/ui/icons'
+import { HERO_FILM_SRC } from '@/constants/media'
 import { cn } from '@/utils/cn'
 
 /**
  * Full-bleed hero: the film plays on its own loop and nothing advances past it
  * unless a visitor picks one of the stills from the rail on the right.
- * Every asset lives in `public/` — they are large binaries, so they stay out of
- * the bundle graph and get served directly. The stills are ~100 KB WebP; re-run
- * that step if any of them is replaced.
+ * The stills live in `public/` — they are large binaries, so they stay out of
+ * the bundle graph and get served directly. They are ~100 KB WebP; re-run that
+ * step if any of them is replaced.
  *
  * THE FILM IS THE MASTER, NOT A WEB CUT. `rvx-3d.mp4` is the RVX 3D product
  * video copied in byte-for-byte on request: 2560x1440, 30 fps, 10 Mbps, 2:12
@@ -15,8 +16,13 @@ import { cn } from '@/utils/cn'
  * cut it replaced, and it is the first thing the home page asks a visitor to
  * download. It carries an audio track too, which the element mutes.
  *
+ * Being 173 MB it cannot be committed, so unlike every other asset here it is
+ * hosted rather than deployed — see `@/constants/media` for where it resolves
+ * from and what has to be set for production to find it.
+ *
  * If it is ever allowed to be transcoded, this is the step — same frame, same
- * cut, web bitrate, moov atom in front:
+ * cut, web bitrate, moov atom in front. It lands around 15 MB, which is small
+ * enough to commit and would let the hosting go away entirely:
  *
  *   ffmpeg -i "src/assets/images/RVX 3D_Product_Video.mp4" \
  *     -vf scale=1280:-2 -c:v libx264 -preset slow -crf 24 \
@@ -28,7 +34,7 @@ import { cn } from '@/utils/cn'
 const SLIDES = [
   {
     type: 'video',
-    src: '/videos/rvx-3d.mp4',
+    src: HERO_FILM_SRC,
     poster: '/videos/rvx-3d-poster.jpg',
   },
   {

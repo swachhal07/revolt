@@ -34,3 +34,11 @@ src/assets/images/REVOLT 96SEC.mp4
 src/assets/images/RVX 3D_Product_Video.mp4
 # 64MB. Cut: public/videos/rv-blazex.mp4.
 src/assets/images/RV_BlazeX.mp4
+
+# The hero film, 173MB, kept byte-for-byte rather than cut down. Past GitHub's
+# 100MB blob limit, and Git LFS is not a way around it here: Vercel clones
+# without resolving LFS, so it would deploy the pointer file and serve 130 bytes
+# of text as an MP4. It is hosted on Vercel Blob instead — see
+# src/constants/media.js. Keep the local copy: with VITE_MEDIA_BASE_URL unset,
+# dev serves the hero straight from this path.
+public/videos/rvx-3d.mp4
