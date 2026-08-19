@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import Container from '@/components/ui/Container'
 import { ChevronRight } from '@/components/ui/icons'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
@@ -535,22 +536,38 @@ export default function FeaturedBikes() {
             />
           </div>
 
-          {/* Deliberately inert: this used to open the bike's detail page,
-              and it does not navigate any more. A span rather than a dead
-              <Link> or a no-op <button> — a control that announces itself to
-              a screen reader or takes a tab stop and then does nothing is
-              worse than plain text. The card's hover still animates it, so
-              it reads as part of the card rather than as a broken link. */}
-          <span
+          {/* Opens the model's own page. This was an inert <span> for a while —
+              it had been a link, was stood down when the detail route was not
+              ready, and kept its underline and its hover the whole time. A
+              thing that is underlined, animates on hover and reads "Configure ›"
+              is a link as far as anybody looking at it is concerned, so the
+              honest options were to make it navigate or to stop drawing it like
+              that. It navigates.
+
+              The card is not itself a link, so there is nothing to nest inside
+              here. `stopPropagation` is not needed for the same reason.
+
+              Its own focus ring, now that it takes a tab stop again: the hover
+              state is a `group-hover` driven by the card, which a keyboard never
+              triggers, so without this the control could be focused with no
+              indication of it. */}
+          <Link
+            to={`/motorcycles/${bike.slug}`}
             className={cn(
               'mt-8 inline-flex items-center gap-2 self-center text-xs font-semibold tracking-[0.16em] uppercase',
               'text-ink-900 underline decoration-ink-900/25 decoration-1 underline-offset-[7px]',
               'transition-colors duration-300',
               EASE,
               'group-hover:text-brand-600 group-hover:decoration-brand-600',
+              'hover:text-brand-600 hover:decoration-brand-600',
+              'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-500',
             )}
           >
+            {/* The model name is in the card above, but a screen reader reading
+                the links on this page hears "Configure" six times over with
+                nothing to tell them apart. */}
             Configure
+            <span className="sr-only"> the {bike.name}</span>
             <ChevronRight
               className={cn(
                 'size-3 transition-transform duration-300',
@@ -558,7 +575,7 @@ export default function FeaturedBikes() {
                 'group-hover:translate-x-1',
               )}
             />
-          </span>
+          </Link>
         </article>
       )),
     [],

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Button from '@/components/ui/Button'
 import { ArrowRight, Check } from '@/components/ui/icons'
-import { CONTACT } from '@/constants/site'
+import { CONTACT, SITE } from '@/constants/site'
 import { cn } from '@/utils/cn'
 
 /**
@@ -33,15 +34,29 @@ import { cn } from '@/utils/cn'
  * No enclosure, padding or radius of the form's own — the page owns the sheet
  * this sits on and rules the column beside it.
  *
- * DELIVERY — set `VITE_CONTACT_ENDPOINT` to the URL that should receive the
- * JSON payload (your own API, Formspree, a serverless function). Until it is
- * set, submissions go nowhere and the confirmation says so rather than claiming
- * a message was sent; nobody should ship a form that lies about that.
+ * DELIVERY — Web3Forms. The sheet POSTs JSON straight to their endpoint and they
+ * relay it to whichever inbox is registered against the access key; there is no
+ * server of ours in the path, which is the reason to use it on a static site.
+ *
+ * The key sits in the source rather than in an env var deliberately. Every
+ * `VITE_` variable is inlined into the bundle at build time, so an env var here
+ * would hide it from the repository and from nobody else — and Web3Forms access
+ * keys are public by design, rate-limited and domain-locked in their dashboard
+ * rather than kept secret. Putting it behind an env var would buy no security
+ * and cost a deploy that silently stops delivering the day the variable is
+ * forgotten. Change the inbox in the Web3Forms dashboard, or swap the key here.
+ *
+ * Two things the submit path checks, in this order, because HTTP status is not
+ * the whole answer: the request has to reach them, and their JSON has to come
+ * back with `success: true`. A rejected key returns a perfectly healthy 200 with
+ * `success: false` in the body, and a form that reads only the status code would
+ * show a receipt for a message nobody received.
  */
 
 const EASE = 'ease-[cubic-bezier(0.32,0.72,0,1)]'
 
-const ENDPOINT = import.meta.env.VITE_CONTACT_ENDPOINT
+const ENDPOINT = 'https://api.web3forms.com/submit'
+const ACCESS_KEY = '8c7328e8-116d-4c3a-bfbb-7759092de0cc'
 
 // `ask` completes the message field's own label — "Message — the bike, and when
 // you want to ride it" — so the sheet states what it wants in the label rather
@@ -138,7 +153,20 @@ function makeReference() {
 }
 
 export default function ContactForm() {
-  const [jobId, setJobId] = useState('general')
+  // `?enquiry=test-ride` arrives from the lineup panel's call to action, so
+  // somebody who pressed "Book a test ride" lands on a sheet that already knows
+  // that. Validated against JOBS rather than trusted: a hand-edited or stale
+  // parameter falls back to the general enquiry instead of putting the form in
+  // a state with no matching chip and no message prompt.
+  //
+  // Read once, as lazy initial state, not synced to the URL. It seeds the form;
+  // it does not own it — re-reading on every render would fight the visitor
+  // every time they picked a different chip.
+  const [searchParams] = useSearchParams()
+  const [jobId, setJobId] = useState(() => {
+    const requested = searchParams.get('enquiry')
+    return JOBS.some((option) => option.id === requested) ? requested : 'general'
+  })
   const [values, setValues] = useState(EMPTY)
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState('idle') // idle | sending | sent | error
@@ -182,24 +210,33 @@ export default function ContactForm() {
     // Honeypot: a hidden field only a script fills. Silent success — telling a
     // bot it was caught is free information for whoever wrote it.
     if (event.currentTarget.elements.namedItem('company')?.value) {
-      setReceipt({ reference: makeReference(), delivered: true, name: values.name })
+      setReceipt({ reference: makeReference(), name: values.name })
       setStatus('sent')
       return
     }
 
-    const payload = { job: job.id, jobLabel: job.label, ...values }
+    // Minted before the send rather than on arrival, so the reference printed on
+    // the slip is the same string sitting in the subject line of the email. A
+    // reference the visitor can quote and the desk cannot find is worse than
+    // none at all.
+    const reference = makeReference()
 
-    if (!ENDPOINT) {
-      // Build-time truth, not a user-facing state — the visitor gets the same
-      // receipt either way, because a missing env var is not their problem. The
-      // person who deploys this still needs to know the message went nowhere,
-      // so it goes to the console rather than onto the page.
-      console.warn(
-        '[contact] VITE_CONTACT_ENDPOINT is not set — submission was validated and discarded.',
-      )
-      setReceipt({ reference: makeReference(), delivered: false, name: values.name })
-      setStatus('sent')
-      return
+    // Web3Forms mails every key it does not recognise as a labelled row, in the
+    // order given — so the keys are written the way they should read in the
+    // inbox, not the way they are named in state. `access_key`, `subject`,
+    // `from_name` and `replyto` are theirs; the rest is the enquiry.
+    const payload = {
+      access_key: ACCESS_KEY,
+      subject: `${job.label} — ${values.name} (${reference})`,
+      from_name: `${SITE.name} website`,
+      // So hitting reply in the inbox answers the person rather than the form.
+      replyto: values.email.trim(),
+      Reference: reference,
+      Name: values.name.trim(),
+      Email: values.email.trim(),
+      Phone: values.phone.trim() || 'Not given',
+      Enquiry: job.label,
+      Message: values.message.trim(),
     }
 
     setStatus('sending')
@@ -211,11 +248,21 @@ export default function ContactForm() {
         body: JSON.stringify(payload),
       })
 
-      if (!response.ok) throw new Error(`Endpoint returned ${response.status}`)
+      const data = await response.json().catch(() => null)
 
-      setReceipt({ reference: makeReference(), delivered: true, name: values.name })
+      // Both gates. A network failure throws on the fetch, a rejected or
+      // over-quota key comes back 200 with `success: false`, and neither of them
+      // is allowed to print a receipt.
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.message ?? `Web3Forms returned ${response.status}`)
+      }
+
+      setReceipt({ reference, name: values.name })
       setStatus('sent')
-    } catch {
+    } catch (error) {
+      // The visitor gets the fallback below the bar; whoever is debugging a
+      // deploy gets the reason it failed.
+      console.error('[contact] submission failed:', error)
       setStatus('error')
     }
   }

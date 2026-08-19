@@ -1,17 +1,10 @@
 import { useParams } from 'react-router-dom'
-import Section from '@/components/ui/Section'
-import Button from '@/components/ui/Button'
+import DetailHero, { SPECS_ID } from '@/components/motorcycles/DetailHero'
+import DetailSpecs from '@/components/motorcycles/DetailSpecs'
+import SpecMarquee from '@/components/motorcycles/SpecMarquee'
+import DetailFigures from '@/components/motorcycles/DetailFigures'
 import NotFound from './NotFound'
 import { getMotorcycleBySlug } from '@/data/motorcycles'
-import { formatNpr } from '@/utils/format'
-
-const SPEC_LABELS = {
-  range: 'Range',
-  topSpeed: 'Top speed',
-  battery: 'Battery',
-  chargeTime: 'Charge time',
-  motor: 'Motor',
-}
 
 export default function MotorcycleDetail() {
   const { slug } = useParams()
@@ -20,55 +13,33 @@ export default function MotorcycleDetail() {
   if (!bike) return <NotFound />
 
   return (
-    <Section eyebrow="Motorcycle" title={bike.name} description={bike.tagline}>
-      <div className="grid gap-12 lg:grid-cols-2">
-        <div className="aspect-4/3 rounded-3xl bg-ink-50" />
+    <>
+      {/* The frame first, the figures after. The heading and the price the
+          section below used to open with are both in the hero now, so repeating
+          them here would be the page introducing the same bike twice. */}
+      <DetailHero bike={bike} />
 
-        {/* A model can be in the lineup before its figures are: the sections
-            below appear as they are filled in, so an unpriced bike reads as a
-            page still being written rather than one that failed to load. */}
-        <div>
-          <p className="font-display text-3xl font-bold text-ink-900">
-            {bike.priceNpr == null ? 'Price on request' : formatNpr(bike.priceNpr)}
-          </p>
-          <p className="mt-1 text-sm text-ink-500">
-            {bike.priceNpr == null ? 'Ask at the showroom' : 'Ex-showroom, Kathmandu'}
-          </p>
+      {/* The three figures that decide it, then the table of all of them. The
+          anchor is on the first of the two: "View specs" in the hero should land
+          a reader on the claim, not on the reference. */}
+      <DetailSpecs bike={bike} id={SPECS_ID} />
 
-          {Object.keys(bike.specs ?? {}).length > 0 ? (
-            <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-ink-900/10 pt-8">
-              {Object.entries(bike.specs).map(([key, value]) => (
-                <div key={key}>
-                  <dt className="text-sm text-ink-500">{SPEC_LABELS[key] ?? key}</dt>
-                  <dd className="mt-1 font-semibold text-ink-900">{value}</dd>
-                </div>
-              ))}
-            </dl>
-          ) : null}
+      {/* The rest of the sheet, running. It takes whatever the fold's rail did
+          not, so the band is a continuation of the section above it rather than
+          a second telling — and a model whose figures all fit in the rail gets
+          no band at all. */}
+      <SpecMarquee bike={bike} />
 
-          {bike.highlights?.length > 0 ? (
-            <ul className="mt-8 space-y-2 border-t border-ink-900/10 pt-8 text-sm text-ink-500">
-              {bike.highlights.map((item) => (
-                <li key={item} className="flex gap-3">
-                  <span className="text-brand-600" aria-hidden="true">
-                    ●
-                  </span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          ) : null}
+      {/* The whole sheet, ruled. A model can be in the lineup before its figures
+          are, so every block inside tests for its own data — an unpriced bike
+          reads as a page still being written rather than one that failed to
+          load.
 
-          <div className="mt-10 flex flex-wrap gap-3">
-            <Button to="/contact" size="lg">
-              Book a test ride
-            </Button>
-            <Button to="/dealers" size="lg" variant="outline">
-              Find a dealer
-            </Button>
-          </div>
-        </div>
-      </div>
-    </Section>
+          No price here. It is set twice already — over the photograph in the
+          hero and again on the lineup card that sent the reader here — and a
+          third printing in the middle of a spec table is where a figure goes to
+          be missed when it changes. */}
+      <DetailFigures bike={bike} />
+    </>
   )
 }

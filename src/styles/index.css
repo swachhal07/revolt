@@ -42,6 +42,17 @@
   --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 
+  /* The exception to "one family across the site", and scoped to earn it: the
+     model-name plate on a motorcycle's own page, and nothing else. Named for
+     the job rather than for the face, so replacing Chakra Petch later is a
+     change here rather than a sweep through the hero. See the note in
+     index.html for why the site takes a second family at all.
+
+     The fallback is the display stack, not a bare `sans-serif`: if the webfont
+     never arrives the plate should look like the rest of the site rather than
+     like the browser's default. */
+  --font-plate: "Chakra Petch", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
   /* The only continuous animation on the site. Everything else is either a
      one-shot entrance or a hover state. */
   --animate-marquee: marquee 38s linear infinite;

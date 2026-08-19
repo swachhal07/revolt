@@ -18,7 +18,10 @@ export const NAV_LINKS = [
 ]
 
 export const CONTACT = {
-  phone: '+977-1-0000000',
+  // Printed and dialled from the same string — every caller sets it as the
+  // label and wraps it in `tel:`. The country code is part of it so the link
+  // works from a phone roaming outside Nepal.
+  phone: '+977-9801568003',
   email: 'info@revoltnepal.com',
   address: 'Balaju, Kathmandu, Nepal',
   // The office map is centred on the coordinate, not on a search string: a name
@@ -30,7 +33,7 @@ export const CONTACT = {
   // roughly 10m — precise enough to be a real coordinate, short enough to print
   // as a readout in one line.
   coords: { lat: 27.7292, lng: 85.3015 },
-  hours: 'Sun – Fri, 10:00 – 18:00',
+  hours: 'Sun – Fri, 09:30 – 18:00',
 }
 
 export const SOCIAL_LINKS = [

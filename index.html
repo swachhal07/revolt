@@ -6,12 +6,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- One family, variable, 400-800. Plus Jakarta Sans replaces the
          Clash Display / Satoshi pair the site opened with: one file instead of
-         two, and the weight axis carries the contrast the two faces used to. -->
+         two, and the weight axis carries the contrast the two faces used to.
+
+         Chakra Petch is the one exception, and it is deliberately a small one:
+         it is loaded for the model-name plate on a motorcycle's own page and
+         used nowhere else. Plus Jakarta Sans is round and friendly, which is
+         right for the whole site and goes flat at 5rem — a model name set that
+         large wants angles. Chakra Petch has the clipped corners of the REVOLT
+         wordmark in the navbar, so the two sit together rather than merely
+         coexisting. Two weights, not the variable range, because the plate uses
+         exactly two.
+
+         Both families in one request: a second stylesheet link is a second
+         round trip to the same host, on the critical path, for one face. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400..800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Plus+Jakarta+Sans:wght@400..800&display=swap"
     />
     <title>Revolt Nepal — Electric Motorcycles</title>
     <meta

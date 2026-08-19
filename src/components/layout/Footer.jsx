@@ -35,9 +35,10 @@ import dugarLogo from '@/assets/images/dugar-logo.png'
  * dissolves into the black above it: the only ambient motion on the site, and
  * it stops the moment it leaves the viewport.
  *
- * PLACEHOLDER DATA — the phone, email, address and social hrefs come from
- * `constants/site.js` and are still stubs (`+977-1-0000000`, bare
- * `facebook.com/`). Fixing them there fixes them everywhere.
+ * PARTLY PLACEHOLDER DATA — the phone, email, address and social hrefs all come
+ * from `constants/site.js`. The phone is real; the email and the social hrefs
+ * are still stubs (bare `facebook.com/`). Fixing them there fixes them
+ * everywhere.
  */
 
 const EASE = 'ease-[cubic-bezier(0.32,0.72,0,1)]'

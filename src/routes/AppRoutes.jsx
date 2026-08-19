@@ -9,6 +9,8 @@ import BlogPost from '@/pages/BlogPost'
 import About from '@/pages/About'
 import Contact from '@/pages/Contact'
 import EmiCalculator from '@/pages/EmiCalculator'
+import Terms from '@/pages/Terms'
+import Privacy from '@/pages/Privacy'
 import NotFound from '@/pages/NotFound'
 
 /** Every route in the site. Add new pages here. */
@@ -25,6 +27,11 @@ export default function AppRoutes() {
         <Route path="about" element={<About />} />
         <Route path="contact" element={<Contact />} />
         <Route path="emi-calculator" element={<EmiCalculator />} />
+        {/* The two the footer has been linking at since it was written. Paths
+            match the `to` values in `Footer.jsx` — until now both fell through
+            to NotFound. */}
+        <Route path="terms" element={<Terms />} />
+        <Route path="privacy" element={<Privacy />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

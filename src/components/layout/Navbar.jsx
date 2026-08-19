@@ -1,6 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import LineupMenu from '@/components/layout/LineupMenu'
+import { ChevronDown } from '@/components/ui/icons'
 import { NAV_LINKS, SITE } from '@/constants/site'
+import { MOTORCYCLES } from '@/data/motorcycles'
 import dugarLogo from '@/assets/images/dugar-logo.png'
 import revoltLogo from '@/assets/images/new-logo-1.png'
 
@@ -16,12 +19,26 @@ const navItems = NAV_LINKS.filter((link) => HEADER_PATHS.includes(link.to)).map(
   path: link.to,
 }))
 
+// The one bar item that opens a panel instead of navigating. Matched on the
+// path rather than the label so renaming "Motorcycles" in NAV_LINKS cannot
+// silently detach the menu from its trigger.
+const MENU_PATH = '/motorcycles'
+const MENU_ID = 'lineup-menu'
+
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [hovered, setHovered] = useState(false)
+  // The mega menu. Separate from `hovered`: the bar goes solid on any pointer
+  // crossing it, which is not the same event as the lineup being asked for.
+  const [menu, setMenu] = useState(false)
+  // Which top-level item the mobile sheet has expanded, if any.
+  const [sheetSection, setSheetSection] = useState(null)
   const { pathname } = useLocation()
   const isHome = pathname === '/'
+
+  const closeMenu = useCallback(() => setMenu(false), [])
+  const keepMenu = useCallback(() => setMenu(true), [])
 
   // Fixed navbar: transparent over the home hero, solid once scrolled.
   // It never hides — the bar stays pinned for the whole page.
@@ -32,19 +49,32 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Any navigation closes the mobile sheet — otherwise it hangs over the new page.
+  // Any navigation closes the mobile sheet and the mega menu — otherwise either
+  // one hangs over the new page. Picking a bike out of the panel is the most
+  // ordinary way this happens.
   useEffect(() => {
     setOpen(false)
+    setSheetSection(null)
+    setMenu(false)
   }, [pathname])
 
   // "Solid" = white background with dark text. Always solid off the home
   // page; on home it turns solid as soon as the user scrolls or hovers the bar.
-  const solid = !isHome || scrolled || hovered
+  // An open panel counts: it is grey-on-white, and a transparent bar over the
+  // hero film would leave it hanging off nothing.
+  const solid = !isHome || scrolled || hovered || menu
 
   return (
     <header
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      // The panel lives inside the header, directly under the bar, so the
+      // pointer never leaves this element on its way from the trigger down into
+      // the grid. That is what lets the menu close on a plain mouse-leave with
+      // no hover-intent timer anywhere in the component.
+      onMouseLeave={() => {
+        setHovered(false)
+        setMenu(false)
+      }}
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
         solid
           ? 'border-b border-ink-900/10 bg-white shadow-[0_10px_30px_-12px_rgba(18,18,20,0.25)]'
@@ -84,9 +114,41 @@ export default function Navbar() {
               solid ? 'text-ink-800 hover:text-brand-600' : 'text-white/90 hover:text-white'
             }`
 
+            // The lineup item is a button, not a link. It used to go to the
+            // index page and now opens the panel instead, and a control that
+            // navigates on click while also opening a menu on hover gives a
+            // reader two different outcomes for what looks like one gesture.
+            // The index page has not gone anywhere — the panel closes on "All
+            // motorcycles".
+            if (item.path === MENU_PATH) {
+              return (
+                <li key={item.label}>
+                  <button
+                    type="button"
+                    aria-expanded={menu}
+                    aria-controls={MENU_ID}
+                    onMouseEnter={keepMenu}
+                    onFocus={keepMenu}
+                    onClick={() => setMenu((v) => !v)}
+                    className={className}
+                  >
+                    {item.label}
+                    <ChevronDown
+                      className={`size-4 transition-transform duration-300 ${
+                        menu ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+                </li>
+              )
+            }
+
             return (
               <li key={item.label}>
-                <Link to={item.path} className={className}>
+                {/* Crossing any other item closes the panel. Without this the
+                    menu stays open while the pointer sits on About, because the
+                    header's own mouse-leave never fires. */}
+                <Link to={item.path} className={className} onMouseEnter={closeMenu}>
                   {item.label}
                 </Link>
               </li>
@@ -133,19 +195,74 @@ export default function Navbar() {
         </div>
       </nav>
 
+      <LineupMenu id={MENU_ID} open={menu} onClose={closeMenu} onKeepOpen={keepMenu} />
+
       {/* Mobile menu */}
       {open && (
         <ul className="mx-6 mb-4 flex flex-col gap-1 rounded-xl bg-white p-3 shadow-lg lg:hidden">
-          {navItems.map((item) => (
-            <li key={item.label}>
-              <Link
-                to={item.path}
-                className="block w-full rounded px-3 py-2 text-left text-sm font-medium text-ink-800 hover:bg-ink-50"
-              >
-                {item.label}
-              </Link>
-            </li>
-          ))}
+          {navItems.map((item) => {
+            // The lineup gets a disclosure rather than the panel, which is a
+            // desktop object: six cutouts in a phone-width sheet would be six
+            // stacked photographs and a great deal of scrolling. Names only.
+            if (item.path === MENU_PATH) {
+              const expanded = sheetSection === item.path
+
+              return (
+                <li key={item.label}>
+                  <button
+                    type="button"
+                    aria-expanded={expanded}
+                    onClick={() => setSheetSection(expanded ? null : item.path)}
+                    className="flex w-full items-center justify-between rounded px-3 py-2 text-left text-sm font-medium text-ink-800 hover:bg-ink-50"
+                  >
+                    {item.label}
+                    <ChevronDown
+                      className={`size-4 transition-transform duration-300 ${
+                        expanded ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {expanded && (
+                    <ul className="mt-1 mb-1 ml-3 flex flex-col border-l border-ink-900/10 pl-3">
+                      {MOTORCYCLES.map((bike) => (
+                        <li key={bike.slug}>
+                          <Link
+                            to={`/motorcycles/${bike.slug}`}
+                            className="flex items-baseline justify-between gap-3 rounded px-3 py-2 text-sm text-ink-800 hover:bg-ink-50"
+                          >
+                            {bike.name}
+                            <span className="text-[10px] font-semibold tracking-[0.18em] text-ink-500 uppercase">
+                              {bike.class}
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                      <li>
+                        <Link
+                          to="/contact?enquiry=test-ride"
+                          className="block rounded px-3 py-2 text-[11px] font-semibold tracking-[0.16em] text-ink-500 uppercase hover:bg-ink-50"
+                        >
+                          Book a test ride
+                        </Link>
+                      </li>
+                    </ul>
+                  )}
+                </li>
+              )
+            }
+
+            return (
+              <li key={item.label}>
+                <Link
+                  to={item.path}
+                  className="block w-full rounded px-3 py-2 text-left text-sm font-medium text-ink-800 hover:bg-ink-50"
+                >
+                  {item.label}
+                </Link>
+              </li>
+            )
+          })}
           <li>
             <Link
               to="/emi-calculator"

@@ -18,8 +18,9 @@ import { cn } from '@/utils/cn'
  * three unlike things (a number, an address, a list of cities) read as one
  * ordered set, and the rules do the work the discs were doing.
  *
- * PLACEHOLDER DATA — phone, email and the showroom cities come from
- * `constants/site.js` and `data/dealers.js`, and are still stubs.
+ * PARTLY PLACEHOLDER DATA — the phone, email and showroom cities come from
+ * `constants/site.js` and `data/dealers.js`. The phone is real; the email and
+ * the showroom's own number are still stubs.
  */
 
 const EASE = 'ease-[cubic-bezier(0.32,0.72,0,1)]'
@@ -52,16 +53,25 @@ const TONES = {
 
 // CONTACT.hours in numbers, so the badge and the printed line cannot disagree.
 // Change one, change the other.
-const OPEN_HOUR = 10
-const CLOSE_HOUR = 18
+//
+// Minutes past midnight rather than whole hours: the desk opens at 09:30, and
+// an hour-resolution clock can only round that to 09:00 or 10:00 — either
+// throwing the doors open half an hour early or turning away a visitor who is
+// already being served.
+const OPEN_AT = 9 * 60 + 30
+const CLOSE_AT = 18 * 60
 const CLOSED_DAY = 6 // Saturday
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const SHORT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
+/** Minutes past midnight as the 24-hour clock the printed line is set in. */
+const clock = (minutes) =>
+  `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
+
 /**
- * Weekday and hour at the desk. Returns null where the runtime has no timezone
- * data — the badge then sits out rather than asserting an hour it cannot know,
- * and the printed hours carry the answer on their own.
+ * Weekday and time of day at the desk. Returns null where the runtime has no
+ * timezone data — the badge then sits out rather than asserting an hour it
+ * cannot know, and the printed hours carry the answer on their own.
  */
 function deskClock() {
   try {
@@ -69,14 +79,16 @@ function deskClock() {
       timeZone: 'Asia/Kathmandu',
       weekday: 'short',
       hour: '2-digit',
+      minute: '2-digit',
       hourCycle: 'h23',
     }).formatToParts(new Date())
 
     const day = SHORT_DAYS.indexOf(parts.find((part) => part.type === 'weekday')?.value)
     const hour = Number(parts.find((part) => part.type === 'hour')?.value) % 24
+    const minute = Number(parts.find((part) => part.type === 'minute')?.value)
 
-    if (day < 0 || Number.isNaN(hour)) return null
-    return { day, hour }
+    if (day < 0 || Number.isNaN(hour) || Number.isNaN(minute)) return null
+    return { day, at: hour * 60 + minute }
   } catch {
     return null
   }
@@ -88,20 +100,20 @@ function readDesk() {
 
   const working = now.day !== CLOSED_DAY
 
-  if (working && now.hour >= OPEN_HOUR && now.hour < CLOSE_HOUR) {
-    return { open: true, label: `Open now — until ${CLOSE_HOUR}:00` }
+  if (working && now.at >= OPEN_AT && now.at < CLOSE_AT) {
+    return { open: true, label: `Open now — until ${clock(CLOSE_AT)}` }
   }
 
   // Before opening on a working day the wait is hours, not a day, and saying so
   // is the difference between a visitor waiting and a visitor leaving.
-  if (working && now.hour < OPEN_HOUR) {
-    return { open: false, label: `Closed — opens ${OPEN_HOUR}:00 today` }
+  if (working && now.at < OPEN_AT) {
+    return { open: false, label: `Closed — opens ${clock(OPEN_AT)} today` }
   }
 
   let next = (now.day + 1) % 7
   while (next === CLOSED_DAY) next = (next + 1) % 7
 
-  return { open: false, label: `Closed — opens ${WEEKDAYS[next]}, ${OPEN_HOUR}:00` }
+  return { open: false, label: `Closed — opens ${WEEKDAYS[next]}, ${clock(OPEN_AT)}` }
 }
 
 /** Reads the desk on mount, then once a minute. Shared by the badge below. */
@@ -144,16 +156,37 @@ export function DeskStatus({ className }) {
   if (!desk) return null
 
   return (
-    <span className={cn('inline-flex items-baseline gap-2.5', className)}>
-      {/* Baseline-aligned by a wrapper of the line's own height, so the dot sits
-          on the type's optical centre instead of on its baseline. */}
-      <span aria-hidden="true" className="relative flex h-[1lh] w-1.5 items-center">
+    <span className={cn('inline', className)}>
+      {/* `vertical-align: middle` rather than a flex row, which is what this was.
+          A flex item is aligned by its baseline, and a flex box whose only
+          in-flow child is an empty span inherits that child's bottom edge as its
+          baseline — so however tall the wrapper was made, the dot ended up
+          sitting *on* the text's baseline rather than centred against it. Middle
+          alignment puts the dot's own midpoint at the baseline plus half the
+          x-height, which is where the eye reads the centre of a line of type.
+
+          Then a pixel up on top of that. `middle` is defined against the
+          x-height, and this line is set bold with figures and a dash in it, so
+          the mass a reader centres on sits nearer the cap line than the x-line.
+          Optically correct beats arithmetically correct on a mark this small —
+          at 6px, one pixel is a sixth of the dot.
+
+          `-top-px` rather than a transform: the span is already `relative` for
+          the ping, so the offset costs nothing, and a transform here would make
+          this a containing block for the absolutely-positioned ring inside it.
+
+          The ping is inset-0 rather than sized on its own, so the ring and the
+          dot cannot drift apart if the dot's size changes. */}
+      <span
+        aria-hidden="true"
+        className="relative -top-px mr-2.5 inline-flex size-1.5 align-middle"
+      >
         {desk.open && (
-          <span className="absolute inline-flex size-1.5 animate-ping rounded-full bg-volt-500 opacity-60" />
+          <span className="absolute inset-0 animate-ping rounded-full bg-volt-500 opacity-60" />
         )}
         <span
           className={cn(
-            'relative inline-flex size-1.5 rounded-full',
+            'relative size-1.5 rounded-full',
             desk.open ? 'bg-volt-500' : 'bg-current opacity-30',
           )}
         />

@@ -27,7 +27,8 @@ import { cn } from '@/utils/cn'
  *
  * The location comes from `CONTACT.coords` in `constants/site.js` and feeds both
  * the embed and the directions link, so the pin and the route can never point at
- * two different places. The phone, email and hours beside it are still stubs.
+ * two different places. The phone and hours beside it are real; the email is
+ * still a stub.
  */
 
 const EASE = 'ease-[cubic-bezier(0.32,0.72,0,1)]'

@@ -24,7 +24,7 @@ import { cn } from '@/utils/cn'
  *   1. The masthead: one centred headline and the desk stated in three ruled
  *      cells under it — status, hours, turnaround. No standfirst; the three
  *      facts are the standfirst. The status is live, because "we reply within
- *      24 hours" is a claim and "closed, opens Sunday 10:00" is a fact.
+ *      24 hours" is a claim and "closed, opens Sunday 09:30" is a fact.
  *   2. The working area: one rectangle, half black slab and half paper. The
  *      slab is the counter — what happens to what you hand over, and the number
  *      to call if the answer cannot wait. The paper half is the form.
@@ -37,9 +37,10 @@ import { cn } from '@/utils/cn'
  * from the masthead strip to the closing index. Red appears only where it marks
  * position — the verb in the headline, the live tab, the send.
  *
- * PLACEHOLDER DATA — phone, email and hours come from `constants/site.js` and
- * are still stubs. Delivery is off until `VITE_CONTACT_ENDPOINT` is set; see
- * the note at the top of ContactForm.
+ * PARTLY PLACEHOLDER DATA — phone, email and hours come from
+ * `constants/site.js`. The phone and hours are real; the email is still a stub.
+ * The form itself delivers: submissions go through Web3Forms to the inbox
+ * registered against the access key — see the note at the top of ContactForm.
  */
 
 const EASE = 'ease-[cubic-bezier(0.32,0.72,0,1)]'

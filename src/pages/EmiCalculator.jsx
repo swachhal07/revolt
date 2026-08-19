@@ -185,15 +185,26 @@ export default function EmiCalculator() {
             finance page. The lede carries the caveat so the heading does not
             have to. */}
         <header data-reveal className="mx-auto max-w-4xl text-center">
-          {/* Not a pill. A badge floating over a dot field reads as chrome
-              borrowed from a dashboard; the site's own eyebrow voice is tracked
-              red capitals, and centred type wants rules to sit inside rather
-              than a container to sit in. */}
-          <p className="flex items-center justify-center gap-4 text-[11px] font-semibold tracking-[0.28em] text-brand-600 uppercase sm:gap-5 sm:text-xs">
-            <span aria-hidden="true" className="h-px w-8 bg-brand-600/25 sm:w-14" />
-            EMI calculator
-            <span aria-hidden="true" className="h-px w-8 bg-brand-600/25 sm:w-14" />
-          </p>
+          {/* The contact page's masthead label, to the letter. Both pages open
+              the same way — a rule-flanked eyebrow over a centred headline with
+              the operative words in red — so they should not differ on the three
+              details this one was differing on.
+
+              The rules run the measure rather than stopping at a fixed 8/14
+              rem: short rules turn the label into a badge sitting in the middle
+              of the page, and the point of flanking it is to establish the
+              centre axis before the headline lands. They are also neutral now,
+              not red at 25% — two weights of red either side of red type is a
+              gradient nobody asked for, and the ink hairline is what every other
+              rule on the site is drawn in. Tracking comes back to 0.2em to
+              match, and the size stops stepping up at `sm`. */}
+          <div className="flex items-center gap-5">
+            <span aria-hidden="true" className="h-px flex-1 bg-ink-900/12" />
+            <p className="text-[11px] font-semibold tracking-[0.2em] text-brand-600 uppercase">
+              EMI calculator
+            </p>
+            <span aria-hidden="true" className="h-px flex-1 bg-ink-900/12" />
+          </div>
 
           <h1 className="mx-auto mt-7 max-w-[14ch] font-display text-[clamp(2.75rem,7vw,5rem)] leading-[0.94] font-extrabold tracking-[-0.045em] text-ink-900 text-balance">
             What it costs{' '}
