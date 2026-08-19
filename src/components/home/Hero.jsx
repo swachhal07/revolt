@@ -1,31 +1,32 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronRight } from '@/components/ui/icons'
-import { HERO_FILM_SRC } from '@/constants/media'
 import { cn } from '@/utils/cn'
 
 /**
  * Full-bleed hero: the film plays on its own loop and nothing advances past it
  * unless a visitor picks one of the stills from the rail on the right.
- * The stills live in `public/` — they are large binaries, so they stay out of
- * the bundle graph and get served directly. They are ~100 KB WebP; re-run that
- * step if any of them is replaced.
+ * Every asset lives in `public/` — they are large binaries, so they stay out of
+ * the bundle graph and get served directly. The stills are ~100 KB WebP; re-run
+ * that step if any of them is replaced.
  *
- * THE FILM IS THE MASTER, NOT A WEB CUT. `rvx-3d.mp4` is the RVX 3D product
- * video copied in byte-for-byte on request: 2560x1440, 30 fps, 10 Mbps, 2:12
- * long, 173 MB. That is roughly fifteen times the weight of the 720p ~1 Mbps
- * cut it replaced, and it is the first thing the home page asks a visitor to
- * download. It carries an audio track too, which the element mutes.
+ * FULL FRAME, WEB BITRATE. `rvx-3d.mp4` is the RVX 3D product video at its
+ * native 2560x1440 / 30 fps, re-encoded from the master's 10 Mbps down to
+ * 5.5 Mbps and cut from 2:12 to 2:00. 79 MB. The resolution is untouched, so
+ * the crop below has the same pixels to work with as before; what went is
+ * bitrate the eye does not get back on a muted, cropped background loop, plus
+ * a 317 kbps audio track this element mutes anyway.
  *
- * Being 173 MB it cannot be committed, so unlike every other asset here it is
- * hosted rather than deployed — see `@/constants/media` for where it resolves
- * from and what has to be set for production to find it.
+ * 79 MB sits under GitHub's 100 MiB blob limit, which is the whole reason it
+ * can live here rather than on a host. Do not re-encode it larger without
+ * checking that number — over the limit the push is rejected outright, and
+ * Git LFS is not a way around it: Vercel clones without resolving LFS and
+ * would deploy the pointer file, serving 130 bytes of text as an MP4.
  *
- * If it is ever allowed to be transcoded, this is the step — same frame, same
- * cut, web bitrate, moov atom in front. It lands around 15 MB, which is small
- * enough to commit and would let the hosting go away entirely:
+ * The master is `src/assets/images/RVX 3D_Product_Video.mp4`, gitignored and
+ * local-only. To regenerate this file from it:
  *
- *   ffmpeg -i "src/assets/images/RVX 3D_Product_Video.mp4" \
- *     -vf scale=1280:-2 -c:v libx264 -preset slow -crf 24 \
+ *   ffmpeg -i "src/assets/images/RVX 3D_Product_Video.mp4" -t 120 \
+ *     -c:v libx264 -preset slow -crf 22 \
  *     -an -movflags +faststart public/videos/rvx-3d.mp4
  */
 // `position` is the object-position of the crop. Below 50% the window sits
@@ -34,7 +35,7 @@ import { cn } from '@/utils/cn'
 const SLIDES = [
   {
     type: 'video',
-    src: HERO_FILM_SRC,
+    src: '/videos/rvx-3d.mp4',
     poster: '/videos/rvx-3d-poster.jpg',
   },
   {
