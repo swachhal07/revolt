@@ -182,10 +182,25 @@ export default function RideModes() {
   // this fold is gated behind the entrance, so a background tab or a headless
   // renderer would take the section away rather than just its arrival. Same
   // guard as the three folds above it.
+  //
+  // Live, not latched. This read `visibilityState` once on mount and set the flag
+  // one way only, so a page that merely *started* hidden kept the fold pinned at
+  // `paint(1)` for the rest of its life and the arrival never ran, even once
+  // somebody was looking at it. A background tab, a tab opened in the background,
+  // or a dev-server reload while the editor had focus were all enough — and the
+  // symptom was a fold that was simply already open, which looks like a section
+  // with no animation rather than like a bug.
+  //
+  // Becoming visible clears it and hands the fold back to the scrub. A renderer
+  // that never becomes visible is unaffected: it still gets the finished state.
   useEffect(() => {
-    if (typeof document === 'undefined' || document.visibilityState === 'visible') return
+    if (typeof document === 'undefined') return
 
-    setUnwatched(true)
+    const apply = () => setUnwatched(document.visibilityState !== 'visible')
+
+    apply()
+    document.addEventListener('visibilitychange', apply)
+    return () => document.removeEventListener('visibilitychange', apply)
   }, [])
 
   // `autoPlay` ignores the OS motion setting, so it is read here instead: reduced
@@ -269,9 +284,14 @@ export default function RideModes() {
   // loop, which forces a synchronous layout on every frame it runs; under Lenis the
   // scroll position is itself main-thread work, so that read landed in the middle of
   // the ease and came out as a stutter in the scroll rather than in the film.
+  //
+  // `unwatched` is a condition here as well as a dependency, so the two writers
+  // stay exclusive: while the page is unwatched `paint(1)` owns the film, and the
+  // moment it is watched this remounts, measures on the spot and takes the film
+  // back — which is what turns a fold that was frozen open into one that opens.
   useEffect(() => {
     const node = ref.current
-    if (!node || !onScreen || still) return
+    if (!node || !onScreen || still || unwatched) return
 
     let frame = 0
     let top = 0
@@ -349,7 +369,7 @@ export default function RideModes() {
       resize.disconnect()
       if (frame) cancelAnimationFrame(frame)
     }
-  }, [onScreen, still])
+  }, [onScreen, still, unwatched, paint])
 
   // Reduced motion gets the fold at its destination: full bleed, no scrub, no
   // scale. What the scroll was driving is a piece of motion, and asking for less
