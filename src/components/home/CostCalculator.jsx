@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import Button from '@/components/ui/Button'
 import { ArrowUpRight } from '@/components/ui/icons'
-import { useReveal } from '@/hooks/useReveal'
+import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { cn } from '@/utils/cn'
-import { MOTORCYCLES } from '@/data/motorcycles'
+import { FLAGSHIP } from '@/data/motorcycles'
 
 /**
  * The sum, written out as a comparison rather than drawn.
@@ -37,8 +37,6 @@ import { MOTORCYCLES } from '@/data/motorcycles'
  * nobody can check.
  */
 
-const EASE = 'ease-[cubic-bezier(0.32,0.72,0,1)]'
-
 const CHARGE_EFFICIENCY = 0.85 // wall-to-pack loss
 
 const PETROL_PRICE = 181 // Rs. per litre
@@ -52,7 +50,7 @@ const KM_MAX = 120
 
 // The flagship sets the figure. Specs are prose in the catalogue ("3.24 kWh"),
 // so the numbers come off the front of the string.
-const BIKE = MOTORCYCLES[0]
+const BIKE = FLAGSHIP
 const PACK_KWH = Number.parseFloat(BIKE.specs.battery) || 3.24
 const RANGE_KM = Number.parseFloat(BIKE.specs.range) || 150
 
@@ -63,7 +61,10 @@ const CHARGE_PER_KM = (PACK_KWH / RANGE_KM / CHARGE_EFFICIENCY) * UNIT_RATE
 const rupees = (n) => `Rs. ${Math.round(n).toLocaleString('en-IN')}`
 
 export default function CostCalculator() {
-  const [ref, shown] = useReveal({ threshold: 0.12 })
+  // Resolves into focus rather than just arriving — this band is the one place
+  // the entrance carries a blur, and the long stagger keeps the argument ahead
+  // of the instrument beside it. See [[useScrollReveal]].
+  const ref = useScrollReveal({ y: 40, blur: 6, duration: 1, stagger: 0.15 })
   const [km, setKm] = useState(40)
 
   const petrolMonth = PETROL_PER_KM * km * DAYS_PER_MONTH
@@ -78,16 +79,6 @@ export default function CostCalculator() {
     { period: 'Monthly', petrol: petrolMonth, electric: chargeMonth },
     { period: 'Yearly', petrol: petrolMonth * 12, electric: chargeMonth * 12 },
   ]
-
-  // One observer, two delays — the argument, then the instrument beside it. Cheap
-  // properties only, so the entrance stays on the compositor.
-  const rise = (delay) =>
-    cn(
-      'transition-[transform,opacity,filter] duration-1000',
-      EASE,
-      delay,
-      shown ? 'translate-y-0 opacity-100 blur-0' : 'translate-y-10 opacity-0 blur-[6px]',
-    )
 
   return (
     <section
@@ -118,7 +109,7 @@ export default function CostCalculator() {
             second row, which is what frees the first row to align. */}
         <div className="grid gap-x-12 gap-y-8 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-x-20 xl:gap-x-28">
           {/* ── The argument and the answer ──────────────────────────────── */}
-          <div className={cn('flex flex-col', rise('delay-0'))}>
+          <div data-reveal className="flex flex-col">
             <h2 className="max-w-xl font-display text-[clamp(2.5rem,5vw,3.75rem)] leading-[0.95] font-bold tracking-[-0.04em] text-balance">
               Do the maths on your{' '}
               {/* The two words that make the claim personal, in the brand red.
@@ -171,7 +162,7 @@ export default function CostCalculator() {
           {/* `min-w-0`: a grid item's default `min-width: auto` refuses to shrink
               below its content, so the table's own min-width would push the whole
               column past the viewport instead of letting the wrapper scroll. */}
-          <div className={cn('flex min-w-0 flex-col gap-4', rise('delay-150'))}>
+          <div data-reveal className="flex min-w-0 flex-col gap-4">
             {/* Two panels, not one: the control is a thing you touch and the table
                 is a thing you read, and running them together made a form out of
                 a comparison. Hairline surfaces rather than cards — on black, a
@@ -297,7 +288,7 @@ export default function CostCalculator() {
               lifts. Red already belongs to the slider thumb in this fold, and a
               pill that filled red under the cursor made itself the loudest thing
               on a surface whose point is the comparison. */}
-          <div className={cn('flex items-start', rise('delay-300'))}>
+          <div data-reveal className="flex items-start">
             <Button
               to="/contact"
               size="lg"
@@ -311,7 +302,7 @@ export default function CostCalculator() {
 
           {/* The inputs, printed. Every figure in the table rests on these three
               rates and two of them move with the market. */}
-          <p className={cn('max-w-3xl text-xs leading-relaxed text-white/50', rise('delay-300'))}>
+          <p data-reveal className="max-w-3xl text-xs leading-relaxed text-white/50">
             <span className="font-semibold text-white/70">Assumptions.</span>{' '}
             Petrol at Rs. {PETROL_PRICE} a litre against a 150cc commuter doing{' '}
             {PETROL_MILEAGE} km/l (Rs. {PETROL_PER_KM.toFixed(2)}/km), and charging

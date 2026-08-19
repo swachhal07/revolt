@@ -3,15 +3,74 @@ import { Link } from 'react-router-dom'
 import { useReveal } from '@/hooks/useReveal'
 import { cn } from '@/utils/cn'
 import { formatNpr } from '@/utils/format'
-import { MOTORCYCLES } from '@/data/motorcycles'
+import { FLAGSHIP, PRICED_MOTORCYCLES } from '@/data/motorcycles'
 
+/**
+ * Seven questions, answered the way they are answered on the showroom floor, and
+ * now the last thing on the home page.
+ *
+ * The section had this slot once before and lost it: seven headings after four
+ * folds of type read as the page arguing with itself, and it was replaced by the
+ * charging fold, which answered the one question a reader was actually holding.
+ * It is back below the film fold rather than in place of anything — the film is a
+ * picture and not an argument, so the page now closes on the frame and then hands
+ * over the remaining detail in a form a reader can ignore a row at a time. Nothing
+ * here is load-bearing for the case above it; every row is optional by
+ * construction, which is the only way seven of them earn a place.
+ *
+ * Centred, and the list is set loose on the page rather than boxed. It was a tray
+ * with a plate inside it for one build, which was wrong for this content: an
+ * enclosure says "component", and these are the last seven lines of a page, not a
+ * widget on it. Without the box the rules do the work, and the type is free to run
+ * at the width the questions want. The centred stack also drops the side rail,
+ * which at this point in the page was a second column asking for attention the
+ * closing section does not need.
+ *
+ * What holds it together instead:
+ *
+ * - A flanked eyebrow, then one heading, then the list, then the one link out. Four
+ *   things on one axis, so a reader who has scrolled five folds has nothing left to
+ *   choose between.
+ * - A heavier rule over the top of the list than between its rows: the list has a
+ *   beginning, and hairlines all the way down would have left it starting nowhere.
+ * - Numbers. Seven questions with no index read as a wall; 01 to 07 gives a reader
+ *   the length of the thing before they start, and the open row takes the red.
+ * - No flourish. A volt marker stroke under the heading's second phrase was tried
+ *   and removed: against brand red at display size the lime read as a highlighter
+ *   left on the artwork. The red phrase is the accent.
+ *
+ * The section is light between the ink-950 film fold and the ink-950 footer, which
+ * is the seam the film fold used to make with the footer on its own — the page
+ * still never runs two black slabs into each other.
+ *
+ * The link goes to the dealer network rather than asking for a test ride. The folds
+ * above already made the page's one ask, and a second would read as the site not
+ * having listened.
+ *
+ * Answers open and close by `hidden` rather than by a height transition: a height
+ * transition needs a measured pixel value to interpolate toward, and copy that
+ * rewraps as the row opens changes that value mid-flight. `hidden` also keeps
+ * collapsed copy out of the tab order and off the accessibility tree while leaving
+ * it in the HTML, which is what a crawler reads.
+ *
+ * The figures come off `MOTORCYCLES` rather than being written in, so a spec
+ * change cannot leave an answer quoting a number the catalogue no longer does.
+ * The range answer is deliberately the exception: it is a band derived from the
+ * rated figure, because a single number for Kathmandu would be a promise no hill
+ * honours.
+ */
 
 const EASE = 'ease-[cubic-bezier(0.32,0.72,0,1)]'
 
 // The flagship sets the figures the answers lean on; the entry bike sets the
-// bottom of the price range.
-const BIKE = MOTORCYCLES[0]
-const ENTRY = MOTORCYCLES[MOTORCYCLES.length - 1]
+// bottom of the price range. `ENTRY` is the cheapest bike that actually has a
+// price rather than the last one in the array — the catalogue now carries
+// models whose figures are still to come, and the array order is a lineup
+// order, not a price order.
+const BIKE = FLAGSHIP
+const ENTRY = PRICED_MOTORCYCLES.reduce((cheapest, bike) =>
+  bike.priceNpr < cheapest.priceNpr ? bike : cheapest,
+)
 
 const RATED_RANGE = Number.parseFloat(BIKE.specs.range) || 150
 const PACK_KWH = Number.parseFloat(BIKE.specs.battery) || 3.24
@@ -47,9 +106,9 @@ const QUESTIONS = [
         {formatNpr(ENTRY.priceNpr)} for the {ENTRY.name} up to{' '}
         {formatNpr(BIKE.priceNpr)} for the {BIKE.name}, before registration and
         insurance. That is more up front than a 150cc petrol commuter and less over
-        four years, which is the whole argument of the fold above this one &mdash;
-        the fuel you stop buying is the part that closes the gap, and it closes it
-        faster the more you ride.
+        four years, which is the whole argument of the running-cost fold above
+        &mdash; the fuel you stop buying is the part that closes the gap, and it
+        closes it faster the more you ride.
       </>
     ),
   },
@@ -124,7 +183,6 @@ const QUESTIONS = [
   },
 ]
 
-
 export default function FAQ() {
   const [ref, shown] = useReveal({ threshold: 0.06 })
   // The first answer is open on arrival; -1 is all closed, which a reader reaches
@@ -142,179 +200,212 @@ export default function FAQ() {
   return (
     <section
       id="questions"
-      className="bg-white pt-14 pb-24 sm:pt-16 sm:pb-32 lg:pt-20 lg:pb-36"
       ref={ref}
+      // Top padding is deliberately the smaller half of the pair. The section above
+      // is a film that ends on 22px of flat black, which already reads as air above
+      // this heading — the full 24/28/32 on top of it left the eyebrow floating a
+      // third of a screen down from the seam. The bottom keeps its full measure,
+      // since what follows is the footer and the last answer should not butt into it.
+      className="bg-ink-50 pt-14 pb-28 sm:pt-16 sm:pb-32 lg:pt-20 lg:pb-36"
     >
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
-        {/* Rail and list. Twelve columns at lg so the rail gets a third and the
-            questions keep their measure — a 5/7 split gives the heading a line
-            long enough not to break every three words and still leaves the
-            answers around 60ch at 1280px. One column
-            below that: on a phone the rail is simply the section's opening. */}
-        <div className="grid gap-x-10 gap-y-12 lg:grid-cols-12 lg:gap-x-12 xl:gap-x-16">
-          {/* ── The rail ──────────────────────────────────────────────────── */}
-          {/* Sticky from lg up, and only there — a rail that follows the scroll
-              on a phone is a rail that eats the viewport. `self-start` is what
-              lets it stick inside a grid cell that would otherwise stretch to the
-              height of the list beside it. */}
-          <div className="lg:sticky lg:top-28 lg:col-span-5 lg:self-start">
-            {/* Set to the running-cost fold's display size so the two closing
-                sections speak at the same volume. leading-[1.02] rather than that
-                fold's 0.95: this heading wraps to three lines, and Plus Jakarta
-                Sans needs about 0.96em between baselines before descenders reach
-                the next line's ascenders. "the showroom" takes the red: the
-                phrase that says these are the answers given in person, which is
-                the section's whole claim. */}
-            <h2
-              className={cn(
-                'font-display text-[clamp(2.5rem,5vw,3.75rem)] leading-[1.02] font-bold tracking-[-0.04em] text-ink-900 text-balance',
-                rise('delay-0'),
-              )}
-            >
-              The questions we get asked in{' '}
-              <span className="text-brand-600">the showroom</span>
-            </h2>
+      {/* Narrower than the page's own container. The list is rules and type with
+          nothing to the side of it, so the measure is the only thing keeping the
+          questions from running to 90 characters on a wide window. */}
+      <div className="mx-auto w-full max-w-4xl px-4 sm:px-6">
+        {/* ── The head ──────────────────────────────────────────────────────── */}
+        {/* The eyebrow: a label between two rules that run out to the measure's own
+            edges, which is the masthead the contact and about pages open with — same
+            gap, same hairline at 12% ink, same red at 11px and 0.2em. It is the
+            site's way of establishing a centre axis before a centred headline lands,
+            and this section is the only other place that needs one, so it is the
+            same object rather than a variation on it. `flex-1` on the rules is what
+            makes them meet the edges at any width; fixed-width rules left the label
+            floating in the middle of a wide window with white either side. */}
+        <div className={cn('flex items-center gap-5', rise('delay-0'))}>
+          <span aria-hidden="true" className="h-px flex-1 bg-ink-900/12" />
+          <p className="text-[11px] font-semibold tracking-[0.2em] text-brand-600 uppercase">
+            Questions
+          </p>
+          <span aria-hidden="true" className="h-px flex-1 bg-ink-900/12" />
+        </div>
 
-            <p
-              className={cn(
-                'mt-5 max-w-[44ch] text-base leading-[1.7] text-ink-800/80 text-pretty sm:text-lg',
-                rise('delay-75'),
-              )}
-            >
-              Seven that come up on the floor most days, answered the way we answer
-              them standing next to the bike.
-            </p>
+        {/* One heading, centred, and the largest type on the lower half of the
+            page. `text-balance` is what stops the last line arriving alone: at this
+            size a widow is a third of a line of white across the middle of the
+            section. */}
+        <h2
+          className={cn(
+            'mt-6 text-center font-display text-[clamp(2.25rem,5.5vw,4rem)] leading-[1.02] font-extrabold tracking-[-0.045em] text-ink-900 text-balance',
+            rise('delay-75'),
+          )}
+        >
+          The questions we get asked{' '}
+          {/* The phrase carries the red on its own. There was a volt marker stroke
+              under it for one build — the palette's second pole meeting the first
+              once on the page — and it came off: against brand red at display size
+              the lime read as a highlighter left on the artwork rather than as an
+              accent, and the heading is already the loudest thing in the section
+              without it. `whitespace-nowrap` stays: the phrase is what the sentence
+              turns on and it should never break across two lines. */}
+          <span className="whitespace-nowrap text-brand-600">in the showroom</span>
+        </h2>
 
-            {/* The address, in the rail rather than trailing the list. A reader
-                who stops after two questions still has it on screen. A link, not
-                a pill — a button here would read as a second ask, and the fold
-                above already made the one this page is allowed. */}
-            <div
-              className={cn(
-                'mt-8 border-t border-ink-900/12 pt-6 sm:mt-10',
-                rise('delay-150'),
-              )}
-            >
-              <p className="text-base leading-relaxed text-ink-800/70">
-                Anything else is better asked in person.
-              </p>
-              <Link
-                to="/dealers"
-                className={cn(
-                  'group mt-2 inline-flex items-baseline gap-1.5 text-lg font-semibold text-ink-900',
-                  'transition-colors duration-300',
-                  EASE,
-                  'hover:text-brand-600 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-500',
-                )}
+        {/* ── The list ──────────────────────────────────────────────────────── */}
+        {/* A heavier rule over the top than between the rows — the list has a
+            beginning, and a hairline there would have left it starting nowhere. No
+            rule under the last row: the section's own bottom edge closes it. */}
+        <div className={cn('mt-14 border-t border-ink-900/25 sm:mt-16', rise('delay-100'))}>
+          {QUESTIONS.map((item, i) => {
+            const isOpen = i === openIndex
+
+            return (
+              <div
+                key={item.id}
+                className={cn(i > 0 && 'border-t border-ink-900/10')}
               >
-                <span className="border-b border-ink-900/25 pb-0.5 transition-colors duration-300 group-hover:border-brand-600/40">
-                  Find your nearest workshop
-                </span>
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    'inline-block transition-transform duration-500',
-                    EASE,
-                    'group-hover:translate-x-1',
-                  )}
-                >
-                  &rarr;
-                </span>
-              </Link>
-            </div>
-          </div>
-
-          {/* ── The list ──────────────────────────────────────────────────── */}
-          {/* A bottom edge on the list, a top edge on every row. The open row
-              carries a brand rule down its left edge for the height of the
-              question and the answer together, so the marker has the same extent
-              as the thing that is open. */}
-          <div
-            className={cn('border-b border-ink-900/12 lg:col-span-7', rise('delay-100'))}
-          >
-            {QUESTIONS.map((item, i) => {
-              const isOpen = i === openIndex
-
-              return (
-                <div
-                  key={item.id}
-                  // Rules switch rather than fade. `transition-colors` here
-                  // interpolated from `oklab(… / 0.12)` to a hex and froze at the
-                  // start value; an indicator wants to snap in any case. The left
-                  // border is always 2px and always present so the row does not
-                  // shift by two pixels when it opens — closed rows carry it
-                  // transparent.
-                  className={cn(
-                    'border-t border-l-2 border-ink-900/12 pl-4 sm:pl-6',
-                    isOpen ? 'border-l-brand-600' : 'border-l-transparent',
-                  )}
-                >
-                  <h3>
-                    <button
-                      type="button"
-                      id={`faq-q-${item.id}`}
-                      aria-expanded={isOpen}
-                      aria-controls={`faq-a-${item.id}`}
-                      onClick={() => setOpenIndex(isOpen ? -1 : i)}
+                <h3>
+                  <button
+                    type="button"
+                    id={`faq-q-${item.id}`}
+                    aria-expanded={isOpen}
+                    aria-controls={`faq-a-${item.id}`}
+                    onClick={() => setOpenIndex(isOpen ? -1 : i)}
+                    className={cn(
+                      'group flex w-full items-start gap-5 py-6 text-left sm:gap-8 sm:py-7',
+                      'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand-500',
+                    )}
+                  >
+                    {/* The index, set at the question's own size and on its own
+                        column so seven of them stand on one vertical edge. Tabular
+                        figures, because 01 and 07 have to occupy the same width for
+                        that edge to exist. It takes the red on the open row, which
+                        is the cheapest possible marker: no rule, no fill, no dot. */}
+                    <span
+                      aria-hidden="true"
                       className={cn(
-                        'group flex w-full items-start justify-between gap-5 py-6 text-left sm:gap-10 sm:py-7',
-                        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
+                        'w-[2ch] shrink-0 font-display text-xl font-bold tabular-nums tracking-[-0.02em]',
+                        'transition-colors duration-500',
+                        EASE,
+                        isOpen ? 'text-brand-600' : 'text-ink-900/25',
+                      )}
+                    >
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+
+                    <span
+                      className={cn(
+                        'flex-1 font-display text-xl leading-[1.35] font-bold tracking-[-0.025em] text-pretty sm:text-2xl',
+                        'transition-colors duration-500',
+                        EASE,
+                        isOpen ? 'text-brand-600' : 'text-ink-900 group-hover:text-brand-600',
+                      )}
+                    >
+                      {item.q}
+                    </span>
+
+                    {/* The indicator: two hairlines that rotate 45° together, so the
+                        plus becomes a cross — which says "close" where a minus only
+                        says "less". Nothing swaps, nothing preloads, nothing
+                        reflows. The rotation snaps rather than easing: transitioning
+                        `rotate` here froze the computed value at whichever state the
+                        row mounted in, and an indicator wants to snap in any case.
+                        The ring it sits in carries the motion instead — it fills on
+                        open and lifts a little under the cursor. */}
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        'grid size-10 shrink-0 place-items-center rounded-full',
+                        'transition-[transform,background-color,box-shadow,color] duration-500',
+                        EASE,
+                        'group-hover:scale-105',
+                        isOpen
+                          ? 'bg-brand-600 text-white shadow-[0_8px_20px_-10px_rgba(225,25,25,0.9)]'
+                          : 'text-ink-900/45 ring-1 ring-ink-900/15 ring-inset group-hover:text-brand-600 group-hover:ring-brand-600/40',
                       )}
                     >
                       <span
-                        className={cn(
-                          'font-display text-lg leading-[1.35] font-bold tracking-[-0.02em] text-pretty sm:text-xl',
-                          isOpen ? 'text-ink-900' : 'text-ink-900/65 group-hover:text-ink-900',
-                        )}
-                      >
-                        {item.q}
-                      </span>
-
-                      {/* Two hairlines that rotate 45° together — the plus becomes
-                          a cross, which says "close" where a minus only says
-                          "less". No swapped glyph, nothing to preload, nothing
-                          that reflows. The rotation snaps: transitioning it here
-                          froze the computed `rotate` at whichever value the row
-                          mounted with, the same fault this file documents for
-                          height and colour transitions. An indicator wants to
-                          snap in any case. `mt-2` sits it on the first line's
-                          optical centre now that the row aligns to the top
-                          rather than the middle. */}
-                      <span
-                        aria-hidden="true"
-                        className={cn(
-                          'relative mt-2 block size-3.5 shrink-0',
-                          isOpen
-                            ? 'rotate-45 text-brand-600'
-                            : 'rotate-0 text-ink-900/40 group-hover:text-ink-900',
-                        )}
+                        className={cn('relative block size-3', isOpen ? 'rotate-45' : 'rotate-0')}
                       >
                         <span className="absolute top-1/2 left-0 h-px w-full -translate-y-1/2 bg-current" />
                         <span className="absolute top-0 left-1/2 h-full w-px -translate-x-1/2 bg-current" />
                       </span>
-                    </button>
-                  </h3>
+                    </span>
+                  </button>
+                </h3>
 
-                  {/* `hidden` rather than a height transition — see the note at
-                      the top of this file. It keeps collapsed copy out of the tab
-                      order and off the accessibility tree while leaving it in the
-                      HTML for crawlers. `animate-rise` is the design system's own
-                      keyframe and replays each time the row is shown; reduced
-                      motion is handled globally in index.css. */}
-                  <div
-                    id={`faq-a-${item.id}`}
-                    role="region"
-                    aria-labelledby={`faq-q-${item.id}`}
-                    hidden={!isOpen}
-                  >
-                    <p className="max-w-[62ch] animate-rise pb-7 text-base leading-[1.7] text-ink-800/85 text-pretty sm:pb-8 sm:text-lg">
-                      {item.a}
-                    </p>
-                  </div>
+                {/* `hidden` rather than a height transition — see the note at the top
+                    of this file. It keeps collapsed copy out of the tab order and off
+                    the accessibility tree while leaving it in the HTML for crawlers.
+                    `animate-rise` is the design system's own keyframe and replays
+                    each time a row is shown; reduced motion is handled globally in
+                    index.css.
+
+                    Indented past the index to the question's own text column, so the
+                    answer hangs off the same edge the question does, and held to
+                    ~64ch: the row is wider than prose wants to be. */}
+                <div
+                  id={`faq-a-${item.id}`}
+                  role="region"
+                  aria-labelledby={`faq-q-${item.id}`}
+                  hidden={!isOpen}
+                >
+                  <p className="max-w-[64ch] animate-rise pb-8 pl-[calc(2ch+1.25rem)] text-base leading-[1.75] text-ink-800/75 text-pretty sm:pb-9 sm:pl-[calc(2ch+2rem)] sm:text-lg">
+                    {item.a}
+                  </p>
                 </div>
-              )
-            })}
-          </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* ── The way out ───────────────────────────────────────────────────── */}
+        {/* One line and one control, on the same axis as everything above. The pill
+            carries its arrow in a well of its own rather than loose beside the
+            label: the well is what makes the whole thing read as a single machined
+            object, and it gives the hover something to move inside. The pill takes
+            the press and the well takes the travel. */}
+        <div className={cn('mt-14 flex flex-col items-center gap-5 sm:mt-16', rise('delay-150'))}>
+          <p className="text-center text-base leading-relaxed text-ink-800/70">
+            Anything else is better asked in person.
+          </p>
+
+          <Link
+            to="/dealers"
+            className={cn(
+              'group inline-flex items-center gap-3 rounded-full bg-ink-900 py-2 pr-2 pl-6',
+              'text-base font-semibold text-white',
+              'shadow-[0_1px_2px_rgba(5,5,5,0.16),0_18px_36px_-24px_rgba(5,5,5,0.55)]',
+              'transition-[transform,background-color] duration-500',
+              EASE,
+              'hover:bg-ink-800 active:scale-[0.985]',
+              'focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand-500',
+            )}
+          >
+            Find your nearest workshop
+            <span
+              aria-hidden="true"
+              className={cn(
+                'grid size-9 shrink-0 place-items-center rounded-full bg-white/12',
+                'ring-1 ring-white/12 ring-inset',
+                'transition-[transform,background-color] duration-500',
+                EASE,
+                'group-hover:translate-x-0.5 group-hover:-translate-y-px group-hover:scale-105 group-hover:bg-brand-500',
+              )}
+            >
+              {/* Drawn here rather than imported: two strokes at the weight the rest
+                  of the site's marks are drawn at, and no icon set to load for one
+                  arrow. */}
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" className="size-3.5">
+                <path
+                  d="M3.5 12.5 12.5 3.5M6 3.5h6.5V10"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+          </Link>
         </div>
       </div>
     </section>

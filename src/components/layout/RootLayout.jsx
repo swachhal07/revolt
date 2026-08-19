@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import ScrollToTop from './ScrollToTop'
+import SmoothScroll from './SmoothScroll'
 
 /** Shared chrome for every page. Pages render into <Outlet />. */
 export default function RootLayout() {
@@ -12,6 +13,7 @@ export default function RootLayout() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <SmoothScroll />
       <ScrollToTop />
       <Navbar />
       <main className={isHome ? 'flex-1' : 'flex-1 pt-24'}>

@@ -22,6 +22,15 @@ export function ArrowUpRight({ className = 'size-4' }) {
   )
 }
 
+export function ArrowRight({ className = 'size-4' }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M4 12h15" />
+      <path d="m12.5 5.5 6.5 6.5-6.5 6.5" />
+    </svg>
+  )
+}
+
 export function ArrowDown({ className = 'size-4' }) {
   return (
     <svg {...base} className={className}>

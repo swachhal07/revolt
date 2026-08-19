@@ -33,6 +33,17 @@ export default function FlickeringGrid({
   fontSize = 90,
   fontWeight = 700,
   textFromBottom = null,
+  // How much of the band's width the word is allowed to fill before it is scaled
+  // down to fit. This is the knob for how wide the marque reads, not `fontSize`:
+  // past a certain size the fit clamps and asking for more type changes nothing.
+  fitWidth = 0.92,
+  // The word's weight against the field it comes out of. `textFloor` is the opacity
+  // a cell inside a letter never drops below and `textGain` multiplies its flicker
+  // on top of that — the floor is what makes the word legible, the gain is what
+  // lets it keep breathing. Weight has to be spent here because the face is loaded
+  // at 400..800, so `fontWeight` is already at its ceiling at 800.
+  textFloor = 0.42,
+  textGain = 2.6,
   className,
   ...props
 }) {
@@ -56,7 +67,12 @@ export default function FlickeringGrid({
     const height = container.clientHeight
     if (!width || !height) return
 
-    const dpr = window.devicePixelRatio || 1
+    // Capped at 2. The field is 2px squares on a 5px pitch, and a 3x phone screen
+    // was drawing 2.25 times the pixels of a 2x one to render dots that are already
+    // below the eye's resolving limit at either density — pure cost. The cap is the
+    // single biggest lever on this component's frame time on the devices that
+    // struggle with it, and nothing about it is visible at 1x or 2x.
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
     canvas.width = Math.floor(width * dpr)
     canvas.height = Math.floor(height * dpr)
     canvas.style.width = `${width}px`
@@ -86,6 +102,7 @@ export default function FlickeringGrid({
             dpr,
             fontSize,
             fontWeight,
+            fitWidth,
             // Measured up from the bottom edge rather than as a fraction of the
             // height, so the word keeps its distance from the foot of the page
             // whatever the block above it grows to.
@@ -93,7 +110,7 @@ export default function FlickeringGrid({
           })
         : null,
     }
-  }, [squareSize, gridGap, maxOpacity, text, fontSize, fontWeight, textFromBottom])
+  }, [squareSize, gridGap, maxOpacity, text, fontSize, fontWeight, fitWidth, textFromBottom])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -105,27 +122,32 @@ export default function FlickeringGrid({
 
     setup()
 
+    // Inside the letters the dots keep a floor and flicker above it, so the word
+    // stays legible while the field around it goes on breathing.
+    const opacityAt = (grid, index) =>
+      grid.mask && grid.mask[index]
+        ? Math.min(1, grid.squares[index] * textGain + textFloor)
+        : grid.squares[index]
+
+    /** Repaint one cell in place. */
+    const paint = (grid, index) => {
+      const { dpr, rows, cell } = grid
+      const x = Math.floor(index / rows) * cell * dpr
+      const y = (index % rows) * cell * dpr
+      const size = squareSize * dpr
+
+      ctx.clearRect(x, y, size, size)
+      ctx.fillStyle = `rgba(${r},${g},${b},${opacityAt(grid, index)})`
+      ctx.fillRect(x, y, size, size)
+    }
+
+    /** Every cell. Setup, resize, and the single still frame. */
     const draw = () => {
       const grid = gridRef.current
       if (!grid) return
 
-      const { dpr, cols, rows, cell, squares, mask } = grid
-      const size = squareSize * dpr
-
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-      for (let i = 0; i < cols; i += 1) {
-        for (let j = 0; j < rows; j += 1) {
-          const index = i * rows + j
-          // Inside the letters the dots keep a floor and flicker above it, so the
-          // word stays legible while the field around it goes on breathing.
-          const opacity =
-            mask && mask[index] ? Math.min(1, squares[index] * 2.6 + 0.42) : squares[index]
-
-          ctx.fillStyle = `rgba(${r},${g},${b},${opacity})`
-          ctx.fillRect(i * cell * dpr, j * cell * dpr, size, size)
-        }
-      }
+      for (let index = 0; index < grid.squares.length; index += 1) paint(grid, index)
     }
 
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')
@@ -134,6 +156,21 @@ export default function FlickeringGrid({
     let last = 0
     let visible = false
 
+    // Only the cells that actually changed this frame get touched.
+    //
+    // The version this replaces cleared the canvas and repainted every cell on
+    // every frame — on a wide screen that is around 75,000 `fillRect` calls and
+    // as many `rgba()` strings, sixty times a second, to change roughly a
+    // hundred of them. It was affordable only because the browser scrolled on
+    // the compositor and could outrun a busy main thread; with Lenis the scroll
+    // position *is* main-thread work, so the same loop shows up as a stutter in
+    // the scroll itself when the footer comes into view.
+    //
+    // The count is drawn from the expected value rather than by rolling a die
+    // for each of the 75,000 cells — the same average number of flickers per
+    // second, without the per-cell `Math.random()` that cost more than the
+    // drawing did. Indices are picked with replacement, so a cell can be chosen
+    // twice in one frame; against a field this size that is invisible.
     const tick = (time) => {
       const grid = gridRef.current
       if (grid) {
@@ -141,12 +178,15 @@ export default function FlickeringGrid({
         last = time
 
         const { squares } = grid
-        for (let i = 0; i < squares.length; i += 1) {
-          if (Math.random() < flickerChance * delta) squares[i] = Math.random() * maxOpacity
+        const flips = Math.min(squares.length, Math.round(squares.length * flickerChance * delta))
+
+        for (let n = 0; n < flips; n += 1) {
+          const index = (Math.random() * squares.length) | 0
+          squares[index] = Math.random() * maxOpacity
+          paint(grid, index)
         }
       }
 
-      draw()
       frame = requestAnimationFrame(tick)
     }
 
@@ -181,9 +221,13 @@ export default function FlickeringGrid({
     )
     intersection.observe(canvas)
 
+    // Always a full redraw, running or not: `setup` reassigns `canvas.width`,
+    // which wipes the bitmap, and the loop only repaints the handful of cells it
+    // changes — so without this the field would come back blank and refill over
+    // several seconds.
     const resize = new ResizeObserver(() => {
       setup()
-      if (!frame) draw()
+      draw()
     })
     resize.observe(container)
 
@@ -199,7 +243,7 @@ export default function FlickeringGrid({
       document.removeEventListener('visibilitychange', sync)
       reduced?.removeEventListener('change', sync)
     }
-  }, [setup, squareSize, flickerChance, maxOpacity, r, g, b])
+  }, [setup, squareSize, flickerChance, maxOpacity, r, g, b, textFloor, textGain])
 
   return (
     <div ref={containerRef} className={cn('h-full w-full', className)} {...props}>
@@ -233,7 +277,19 @@ function toRgb(color) {
  * keeps a long word from being cropped by the edges of the canvas on a phone
  * rather than merely being smaller at a breakpoint.
  */
-function buildMask({ text, width, height, cols, rows, cell, dpr, fontSize, fontWeight, textY }) {
+function buildMask({
+  text,
+  width,
+  height,
+  cols,
+  rows,
+  cell,
+  dpr,
+  fontSize,
+  fontWeight,
+  fitWidth,
+  textY,
+}) {
   const canvas = document.createElement('canvas')
   canvas.width = Math.floor(width * dpr)
   canvas.height = Math.floor(height * dpr)
@@ -246,7 +302,7 @@ function buildMask({ text, width, height, cols, rows, cell, dpr, fontSize, fontW
   ctx.scale(dpr, dpr)
   ctx.font = `${fontWeight} ${fontSize}px ${face}`
 
-  const limit = width * 0.92
+  const limit = width * fitWidth
   const measured = ctx.measureText(text).width
   const size = measured > limit ? Math.floor(fontSize * (limit / measured)) : fontSize
 

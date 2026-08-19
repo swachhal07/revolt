@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { useReveal } from '@/hooks/useReveal'
-import { MOTORCYCLES } from '@/data/motorcycles'
+import { useScrollReveal } from '@/hooks/useScrollReveal'
+import { PRICED_MOTORCYCLES } from '@/data/motorcycles'
 import { formatNpr } from '@/utils/format'
 import { cn } from '@/utils/cn'
 
@@ -74,7 +74,9 @@ const MONTH_PRESETS = [12, 24, 36, 60]
 
 // Rounded to the nearest step so a preset is reachable by dragging too — a pill
 // that highlights on a value the slider cannot produce looks broken.
-const AMOUNT_PRESETS = MOTORCYCLES.map((bike) => ({
+// Priced bikes only: a model whose price is still to come would round `null` to
+// NaN and render a pill that highlights on nothing.
+const AMOUNT_PRESETS = PRICED_MOTORCYCLES.map((bike) => ({
   label: bike.name,
   value: Math.round(bike.priceNpr / AMOUNT_STEP) * AMOUNT_STEP,
 }))
@@ -113,7 +115,16 @@ const trackFill = (pct) => ({
 })
 
 export default function EmiCalculator() {
-  const [ref, shown] = useReveal({ threshold: 0.05, rootMargin: '0px 0px -5% 0px' })
+  // Three beats: the headline, the tray, the slip. Fires early because this is
+  // the page's own opening — at `top 85%` the section is already in view on
+  // arrival and the entrance would be missed. See [[useScrollReveal]].
+  const ref = useScrollReveal({
+    start: 'top 95%',
+    y: 48,
+    blur: 6,
+    duration: 0.9,
+    stagger: 0.14,
+  })
 
   const [amount, setAmount] = useState(AMOUNT_PRESETS[0].value)
   const [rate, setRate] = useState(12)
@@ -152,18 +163,6 @@ export default function EmiCalculator() {
   const tenureInYears =
     months % 12 === 0 ? `${years} ${years === 1 ? 'yr' : 'yrs'}` : `${years.toFixed(1)} yrs`
 
-  // One observer, three beats: the headline, the tray, the slip. Cheap
-  // properties only, so the entrance stays on the compositor.
-  const enter = (delay, className) => ({
-    style: { transitionDelay: shown ? `${delay}ms` : '0ms' },
-    className: cn(
-      'transition-[transform,opacity,filter] duration-[900ms]',
-      EASE,
-      shown ? 'translate-y-0 opacity-100 blur-0' : 'translate-y-12 opacity-0 blur-[6px]',
-      className,
-    ),
-  })
-
   return (
     <section
       ref={ref}
@@ -185,7 +184,7 @@ export default function EmiCalculator() {
             Massive, short, and answering the only question anyone brings to a
             finance page. The lede carries the caveat so the heading does not
             have to. */}
-        <header {...enter(0, 'mx-auto max-w-4xl text-center')}>
+        <header data-reveal className="mx-auto max-w-4xl text-center">
           {/* Not a pill. A badge floating over a dot field reads as chrome
               borrowed from a dashboard; the site's own eyebrow voice is tracked
               red capitals, and centred type wants rules to sit inside rather
@@ -214,7 +213,7 @@ export default function EmiCalculator() {
               Machined enclosure: outer shell in the page's grey with a hairline
               ring, white core inset on a concentric radius. The controls are
               hardware, and hardware sits in something. */}
-          <div {...enter(140, 'lg:col-span-7')}>
+          <div data-reveal className="lg:col-span-7">
             <div className="rounded-[2.25rem] bg-white/40 p-2 ring-1 ring-ink-900/[0.07] ring-inset">
               <div className="rounded-[1.75rem] bg-white px-5 py-6 shadow-[0_30px_80px_-50px_rgba(18,18,20,0.45),inset_0_1px_1px_rgba(255,255,255,0.9)] sm:px-7 sm:py-7">
                 <Step
@@ -281,7 +280,7 @@ export default function EmiCalculator() {
               soft shadow and straightens under the cursor — the only rotation
               on the site, and it is gone below lg where a tilted card would
               only crowd its neighbours' touch targets. */}
-          <div {...enter(260, 'lg:col-span-5 lg:self-center')}>
+          <div data-reveal className="lg:col-span-5 lg:self-center">
             <div className="w-full">
               <div
                 className={cn(

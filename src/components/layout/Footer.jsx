@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { useReveal } from '@/hooks/useReveal'
+import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { CONTACT, NAV_LINKS, SITE } from '@/constants/site'
 import FlickeringGrid from '@/components/ui/FlickeringGrid'
@@ -64,22 +64,16 @@ const VALUE = cn(
 
 export default function Footer() {
   const year = new Date().getFullYear()
-  const [ref, shown] = useReveal({ threshold: 0.05, rootMargin: '0px 0px -5% 0px' })
+  // Three bands — ownership, index, small print — one behind the next. The
+  // trigger fires early (`top 95%`) because the footer is the last thing on
+  // every page: at 85% a reader who scrolls to the very bottom in one throw
+  // arrives before the entrance has started. See [[useScrollReveal]].
+  const ref = useScrollReveal({ start: 'top 95%', y: 16, duration: 0.7, stagger: 0.08 })
 
   // The closing marque is set in dots, so it is a picture of a word rather than
   // a word: the long lockup needs the width to stay legible at this grain, and
   // below it the name alone reads better than a squeezed two-worder.
   const wide = useMediaQuery('(min-width: 64rem)')
-
-  const enter = (delay, className) => ({
-    style: { transitionDelay: shown ? `${delay}ms` : '0ms' },
-    className: cn(
-      'transition-[opacity,transform] duration-700',
-      EASE,
-      shown ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
-      className,
-    ),
-  })
 
   return (
     <footer ref={ref} className="relative isolate overflow-hidden bg-ink-950 text-white">
@@ -95,7 +89,12 @@ export default function Footer() {
       <div aria-hidden="true" className="absolute inset-0 -z-20">
         <FlickeringGrid
           text={wide ? 'REVOLT NEPAL' : 'REVOLT'}
-          fontSize={wide ? 210 : 104}
+          // Larger than the fit will allow at either breakpoint, on purpose: the word
+          // is sized by `fitWidth` below, and `fontSize` is only the ceiling it would
+          // take if the band were ever wide enough not to clamp. Raising it alone does
+          // nothing once the fit is binding, which is why it moved together with the
+          // fit and not instead of it.
+          fontSize={wide ? 240 : 118}
           fontWeight={800}
           textFromBottom={wide ? 150 : 78}
           squareSize={2}
@@ -103,6 +102,18 @@ export default function Footer() {
           color="#d4d4d8"
           maxOpacity={0.2}
           flickerChance={0.1}
+          // Out to 98% of the band from 92. The marque is the last thing on the site
+          // and it is bled to the edges deliberately — the 8% margin read as a word
+          // centred in a box rather than a name the page runs out of. It stays under
+          // 100 so the R and the L keep a cell of air outside them and the field's own
+          // dust is what reaches the edge, not the letterforms.
+          fitWidth={0.98}
+          // A little heavier against that dust: the floor inside the letters from 0.42
+          // to 0.52, the flicker on top of it from 2.6x to 2.9x. The field itself is
+          // untouched at maxOpacity 0.2, since what makes the word read bold is the
+          // gap between the two — lifting both would only pale the whole band.
+          textFloor={0.52}
+          textGain={2.9}
         />
       </div>
 
@@ -124,10 +135,8 @@ export default function Footer() {
             Logos left, contact right. On a phone the columns stack and the
             hairlines drop away rather than turning into a stack of boxes. */}
         <div
-          {...enter(
-            60,
-            'grid gap-12 border-b border-white/10 py-14 md:grid-cols-12 md:items-center md:gap-10 lg:py-20',
-          )}
+          data-reveal
+          className="grid gap-12 border-b border-white/10 py-14 md:grid-cols-12 md:items-center md:gap-10 lg:py-20"
         >
           <div className="flex items-center gap-6 md:col-span-4">
             {/* Black artwork on transparency — the same brightness/invert
@@ -170,7 +179,7 @@ export default function Footer() {
             Every destination on the site, numbered. Cells rather than a row of
             links: the whole cell is the target, which on a phone is the
             difference between a 20px word and a 64px band. */}
-        <nav aria-label="Footer" {...enter(140, 'border-b border-white/10')}>
+        <nav aria-label="Footer" data-reveal className="border-b border-white/10">
           <ul className="grid sm:grid-cols-2 md:grid-cols-5">
             {NAV_LINKS.map((link, index) => (
               <li
@@ -236,10 +245,8 @@ export default function Footer() {
         {/* ── Small print ──────────────────────────────────────────────────
             One line: who owns it, the small print, and who built it. */}
         <div
-          {...enter(
-            220,
-            'flex flex-col gap-5 py-9 sm:grid sm:grid-cols-3 sm:items-center',
-          )}
+          data-reveal
+          className="flex flex-col gap-5 py-9 sm:grid sm:grid-cols-3 sm:items-center"
         >
           <p className="text-sm text-white/45">
             &copy; {year} {SITE.name}. All rights reserved.

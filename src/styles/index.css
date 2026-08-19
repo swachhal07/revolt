@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Lenis's own three rules: keep the document from being height-constrained,
+   turn off native smooth scrolling while Lenis is driving (the two fight over
+   the same position), and let `data-lenis-prevent` opt an inner scroller out.
+   See [[SmoothScroll]]. */
+@import "lenis/dist/lenis.css";
+
 /* ---------------------------------------------------------------
    Design tokens. Anything defined in @theme becomes a Tailwind
    utility automatically, e.g. `bg-brand-500`, `font-display`.
@@ -43,6 +49,35 @@
   /* Re-entry for content that swaps in place (spec values on the lineup
      selector). Keyed remounts replay it. */
   --animate-rise: rise 0.5s cubic-bezier(0.32, 0.72, 0, 1) both;
+
+  /* A photograph climbing into a panel from below, over the one already there
+     (the charging fold). Long, because it moves the full height of a
+     half-viewport panel and a fast pass over that distance reads as a flinch. */
+  --animate-panel-up: panel-up 1.05s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@keyframes panel-up {
+  from {
+    transform: translate3d(0, 100%, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* The charging section's dwell meter. It is both the progress rule and the
+   clock: `animationend` on this keyframe is what advances the beat, so the
+   duration is set inline from a single constant in the component rather than
+   tokenised here. See [[Charging]] — and note that the reduce block below would
+   crush this to 0.01ms, which is why that component reads the setting in JS and
+   does not mount the animation at all. */
+@keyframes meter {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 
 @keyframes rise {

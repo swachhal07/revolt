@@ -24,6 +24,32 @@ import { cn } from '@/utils/cn'
 
 const EASE = 'ease-[cubic-bezier(0.32,0.72,0,1)]'
 
+/**
+ * Two surfaces, one index. The rows were written white-on-black for a dark
+ * masthead that no longer exists; the page they now sit on is paper, and the
+ * closing black belongs to the footer. Rather than fork the component, the
+ * palette is lifted out — everything else about the row is identical, because
+ * the arrangement was never the thing that depended on the background.
+ */
+const TONES = {
+  dark: {
+    rule: 'border-white/12',
+    index: 'text-white/25',
+    label: 'text-white/45',
+    value: 'text-white',
+    arrow: 'text-white/25',
+    arrowHover: 'group-hover:text-white',
+  },
+  light: {
+    rule: 'border-ink-900/12',
+    index: 'text-ink-900/25',
+    label: 'text-ink-500',
+    value: 'text-ink-900',
+    arrow: 'text-ink-900/25',
+    arrowHover: 'group-hover:text-ink-900',
+  },
+}
+
 // CONTACT.hours in numbers, so the badge and the printed line cannot disagree.
 // Change one, change the other.
 const OPEN_HOUR = 10
@@ -102,39 +128,38 @@ function useDesk() {
 /**
  * Whether anyone is at the desk right now, in Kathmandu time rather than the
  * reader's — what a visitor wants to know is whether a call gets picked up, not
- * what their own clock says. Sits with the page label, because it is a fact
- * about the page and not a fourth way to make contact.
+ * what their own clock says.
+ *
+ * Set as a plain line rather than a pill: it goes in a ruled cell beside the
+ * other two facts about the desk, and a pill in one cell of three would make
+ * that one look like a control. The dot inherits its colour from the text, so
+ * the same line works on either surface; only "open" spends a colour, and it
+ * spends volt rather than red, because red on this site marks position.
+ *
+ * Returns null where the runtime cannot resolve Kathmandu time — the printed
+ * hours in the next cell carry the answer on their own.
  */
-export function DeskBadge({ className }) {
+export function DeskStatus({ className }) {
   const desk = useDesk()
   if (!desk) return null
 
   return (
-    <p
-      className={cn(
-        'inline-flex items-center gap-2.5 rounded-full bg-white/[0.06] py-1.5 pr-4 pl-3',
-        'text-[13px] font-semibold text-white/80 ring-1 ring-white/15 ring-inset',
-        className,
-      )}
-    >
-      <span className="relative flex size-1.5">
+    <span className={cn('inline-flex items-baseline gap-2.5', className)}>
+      {/* Baseline-aligned by a wrapper of the line's own height, so the dot sits
+          on the type's optical centre instead of on its baseline. */}
+      <span aria-hidden="true" className="relative flex h-[1lh] w-1.5 items-center">
         {desk.open && (
-          <span
-            aria-hidden="true"
-            className="absolute inline-flex size-full animate-ping rounded-full bg-volt-400 opacity-60"
-          />
+          <span className="absolute inline-flex size-1.5 animate-ping rounded-full bg-volt-500 opacity-60" />
         )}
         <span
-          aria-hidden="true"
           className={cn(
             'relative inline-flex size-1.5 rounded-full',
-            desk.open ? 'bg-volt-400' : 'bg-white/30',
+            desk.open ? 'bg-volt-500' : 'bg-current opacity-30',
           )}
         />
       </span>
       {desk.label}
-      <span className="font-normal text-white/45">· {CONTACT.hours}</span>
-    </p>
+    </span>
   )
 }
 
@@ -161,9 +186,11 @@ const LINES = [
   },
 ]
 
-export default function DirectLines({ className }) {
+export default function DirectLines({ tone = 'dark', className }) {
+  const palette = TONES[tone]
+
   return (
-    <ul className={cn('border-t border-white/12', className)}>
+    <ul className={cn('border-t', palette.rule, className)}>
       {LINES.map(({ id, label, value, href, to }, i) => {
         const inner = (
           <>
@@ -172,7 +199,8 @@ export default function DirectLines({ className }) {
                 that red marks position, not decoration. */}
             <span
               className={cn(
-                'font-display text-[11px] font-bold tabular-nums text-white/25',
+                'font-display text-[11px] font-bold tabular-nums',
+                palette.index,
                 'transition-colors duration-500',
                 EASE,
                 'group-hover:text-brand-500',
@@ -181,7 +209,12 @@ export default function DirectLines({ className }) {
               {String(i + 1).padStart(2, '0')}
             </span>
 
-            <span className="text-[10px] font-semibold tracking-[0.24em] text-white/45 uppercase">
+            <span
+              className={cn(
+                'text-[10px] font-semibold tracking-[0.24em] uppercase',
+                palette.label,
+              )}
+            >
               {label}
             </span>
 
@@ -190,7 +223,8 @@ export default function DirectLines({ className }) {
                 rows of unequal content stay on one rhythm. */}
             <span
               className={cn(
-                'min-w-0 truncate font-display text-[clamp(1.15rem,2.2vw,1.6rem)] font-bold tracking-[-0.02em] text-white',
+                'min-w-0 truncate font-display text-[clamp(1.15rem,2.2vw,1.6rem)] font-bold tracking-[-0.02em]',
+                palette.value,
                 'transition-transform duration-500',
                 EASE,
                 'sm:group-hover:translate-x-1',
@@ -201,10 +235,12 @@ export default function DirectLines({ className }) {
 
             <ArrowUpRight
               className={cn(
-                'size-4 shrink-0 text-white/25',
+                'size-4 shrink-0',
+                palette.arrow,
                 'transition-[transform,color] duration-500',
                 EASE,
-                'group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white',
+                'group-hover:-translate-y-0.5 group-hover:translate-x-0.5',
+                palette.arrowHover,
               )}
             />
           </>
@@ -226,7 +262,7 @@ export default function DirectLines({ className }) {
         )
 
         return (
-          <li key={id} className="border-b border-white/12">
+          <li key={id} className={cn('border-b', palette.rule)}>
             {to ? (
               <Link to={to} className={rowClass}>
                 {inner}

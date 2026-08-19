@@ -20,7 +20,16 @@ export const NAV_LINKS = [
 export const CONTACT = {
   phone: '+977-1-0000000',
   email: 'info@revoltnepal.com',
-  address: 'Kathmandu, Nepal',
+  address: 'Balaju, Kathmandu, Nepal',
+  // The office map is centred on the coordinate, not on a search string: a name
+  // makes Google resolve a listing and a resolved listing opens its own info
+  // window over the map. Both the embed and the directions link are built from
+  // this one pair in OfficeMap, so the pin and the route cannot disagree.
+  //
+  // Taken off the showroom's own Google Maps place. Four decimal places is
+  // roughly 10m — precise enough to be a real coordinate, short enough to print
+  // as a readout in one line.
+  coords: { lat: 27.7292, lng: 85.3015 },
   hours: 'Sun – Fri, 10:00 – 18:00',
 }
 

@@ -23,6 +23,14 @@ dist-ssr
 *.sln
 *.sw?
 
-# 604MB master render, exceeds GitHub 100MB limit. The web encode lives at
-# public/videos/revolt-96sec.mp4 (41MB, libx264 crf 24). Keep the master local.
+# Camera/render masters. Every one of these has a cut under public/videos/ that
+# the site actually loads, so the masters stay local — they are only kept around
+# in case a cut has to be re-made. The web cuts under public/videos/ are the ones
+# in the repo, via Git LFS (see .gitattributes).
+#
+# 604MB, exceeds GitHub's 100MB limit. Cut: public/videos/revolt-96sec.mp4.
 src/assets/images/REVOLT 96SEC.mp4
+# 165MB, exceeds GitHub's 100MB limit. Cut: public/videos/rvx-3d.mp4.
+src/assets/images/RVX 3D_Product_Video.mp4
+# 64MB. Cut: public/videos/rv-blazex.mp4.
+src/assets/images/RV_BlazeX.mp4

@@ -5,6 +5,7 @@ import Motorcycles from '@/pages/Motorcycles'
 import MotorcycleDetail from '@/pages/MotorcycleDetail'
 import Dealers from '@/pages/Dealers'
 import Blog from '@/pages/Blog'
+import BlogPost from '@/pages/BlogPost'
 import About from '@/pages/About'
 import Contact from '@/pages/Contact'
 import EmiCalculator from '@/pages/EmiCalculator'
@@ -20,6 +21,7 @@ export default function AppRoutes() {
         <Route path="motorcycles/:slug" element={<MotorcycleDetail />} />
         <Route path="dealers" element={<Dealers />} />
         <Route path="blog" element={<Blog />} />
+        <Route path="blog/:slug" element={<BlogPost />} />
         <Route path="about" element={<About />} />
         <Route path="contact" element={<Contact />} />
         <Route path="emi-calculator" element={<EmiCalculator />} />

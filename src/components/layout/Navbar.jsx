@@ -4,11 +4,12 @@ import { NAV_LINKS, SITE } from '@/constants/site'
 import dugarLogo from '@/assets/images/dugar-logo.png'
 import revoltLogo from '@/assets/images/new-logo-1.png'
 
-// The header carries the short path only: home, the lineup, the company. Dealers
-// and Contact are still routes and are still listed in the footer — they are
-// just not top-level bar items, and Contact already has the button on the right.
-// Labels keep coming from NAV_LINKS so the bar and the footer cannot drift.
-const HEADER_PATHS = ['/', '/motorcycles', '/about']
+// The header carries the short path only: home, the lineup, the writing, the
+// company. Dealers and Contact are still routes and are still listed in the
+// footer — they are just not top-level bar items, and Contact already has the
+// button on the right. Labels and order both come from NAV_LINKS, so the bar and
+// the footer cannot drift and Blog lands where the footer already puts it.
+const HEADER_PATHS = ['/', '/motorcycles', '/blog', '/about']
 
 const navItems = NAV_LINKS.filter((link) => HEADER_PATHS.includes(link.to)).map((link) => ({
   label: link.label,

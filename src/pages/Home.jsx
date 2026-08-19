@@ -3,35 +3,49 @@ import FeaturedBikes from '@/components/home/FeaturedBikes'
 import SwappableBattery from '@/components/home/SwappableBattery'
 import RevOS from '@/components/home/RevOS'
 import CostCalculator from '@/components/home/CostCalculator'
+import Charging from '@/components/home/Charging'
+import RideModes from '@/components/home/RideModes'
 import FAQ from '@/components/home/FAQ'
 
 /**
- * The page closes on the arithmetic.
+ * The page closes on the one objection arithmetic cannot answer.
  *
- * A "why electric" card row and a dark "ride one before you decide" slab held
- * this last slot first, and both restated what the sections above them had
- * already made: the cards were the running-cost fold in three sentences, and the
- * slab asked for a test ride that fold had already asked for. An FAQ replaced
- * them and went through two more builds that came out again — a ruled ledger with
- * a figure in every band, then a spec plate over four full-width answers. Both
- * were light-ground, hairline-ruled, typography-only sections, which is the lane
- * that failed rather than any detail in them.
+ * This last slot has been rebuilt four times. A "why electric" card row and a
+ * dark "ride one before you decide" slab held it first, and both restated what
+ * the sections above them had already made: the cards were the running-cost fold
+ * in three sentences, and the slab asked for a test ride that fold had already
+ * asked for. An FAQ replaced them and went through three builds of its own — a
+ * ruled ledger, a spec plate, then a seven-question accordion that shipped.
  *
- * The section that stayed is a seven-question accordion on the black, one answer
- * open at a time. The count is what changed the argument: at four questions an
- * open list beats a disclosure, and at seven it is a wall.
+ * The accordion came out because seven headings is the page arguing with itself.
+ * Everything below the fold on this page is type, and by this point a reader has
+ * had four sections of it; the question they are actually holding is narrower
+ * than seven, and it is where you plug the bike in when the power goes. So the
+ * slot is now the charging section: one claim, two beats, and a photograph that
+ * changes with the copy.
  *
  * It runs after the running-cost fold rather than before it. The fold makes the
- * financial case and the questions are what a reader raises against a case that
- * good — the section is the reply to it, and a reply belongs after the claim. The
- * cost of that order is that the black fold is no longer the last thing on the
- * page, so the questions have to close it instead, which is why they end on an
- * address rather than trailing off.
+ * financial case and charging is the objection a reader raises against a case
+ * that good, so it belongs after the claim. The cost of that order is that the
+ * black fold is no longer the last thing on the page, which is exactly what the
+ * charging section is for: it is white, and it is the seam between that fold and
+ * the ink-950 footer. Without it the page ends in one unbroken block of black.
  *
- * The page therefore runs dark from the running-cost fold through the questions
- * and into the footer, breaking the strict black/white alternation the folds above
- * keep. That is the closing movement, and FAQ.jsx documents how it stays distinct
- * from the fold it follows.
+ * Charging.jsx documents the two beats and why the meter and the clock are the
+ * same object.
+ *
+ * Then a fold that is a picture rather than an argument. Everything from the
+ * running-cost fold down is reasoning: what it saves, where it charges. The page
+ * should not hand a reader over to the footer mid-sentence, so the closing frame
+ * is the bike on a flyover — the one thing you cannot change beside the one thing
+ * you can. RideModes.jsx documents the film's own arrival.
+ *
+ * The FAQ is last, and it is back after having lost this slot once. What was wrong
+ * with it then was its position, not its content: seven headings cannot be the
+ * argument's last word. After the film they are not — the case is made, the page
+ * has stopped talking, and what remains is detail a reader takes a row at a time or
+ * skips entirely. It also puts a white section between the film fold and the black
+ * footer, which is the alternation the whole lower half of this page is built on.
  */
 export default function Home() {
   return (
@@ -45,6 +59,10 @@ export default function Home() {
       <RevOS />
 
       <CostCalculator />
+
+      <Charging />
+
+      <RideModes />
 
       <FAQ />
     </>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Container from '@/components/ui/Container'
 import { ChevronRight } from '@/components/ui/icons'
-import { useReveal } from '@/hooks/useReveal'
+import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { MOTORCYCLES } from '@/data/motorcycles'
 import { cn } from '@/utils/cn'
 
@@ -21,26 +21,128 @@ import { cn } from '@/utils/cn'
 
 const EASE = 'ease-[cubic-bezier(0.32,0.72,0,1)]'
 
+/**
+ * `EASE` as a function, for the one thing on this page a CSS transition cannot
+ * drive: a scroll offset. Same four control points, so the rail moves on the
+ * curve everything around it moves on.
+ *
+ * Solved rather than approximated. `x` and `y` are separate cubics of the
+ * parameter `t`, so progress along the curve is not progress along the
+ * timeline — Newton-Raphson recovers `t` from elapsed time, five iterations
+ * being far more than a monotonic curve of this shape needs.
+ */
+const bezier = (x1, y1, x2, y2) => {
+  const a = (u, v) => 1 - 3 * v + 3 * u
+  const b = (u, v) => 3 * v - 6 * u
+  const at = (t, u, v) => ((a(u, v) * t + b(u, v)) * t + 3 * u) * t
+  const slope = (t, u, v) => 3 * a(u, v) * t * t + 2 * b(u, v) * t + 3 * u
+
+  return (x) => {
+    if (x <= 0) return 0
+    if (x >= 1) return 1
+
+    let t = x
+    for (let i = 0; i < 5; i += 1) {
+      const d = slope(t, x1, x2)
+      if (d === 0) break
+      t -= (at(t, x1, x2) - x) / d
+    }
+
+    return at(t, y1, y2)
+  }
+}
+
+const ease = bezier(0.32, 0.72, 0, 1)
+
+// How many rules the indicator shows at once, regardless of how long the
+// lineup gets. Three is the number of bikes on screen above `lg`, so the
+// indicator reads as a window on the row rather than a count of the catalogue.
+const WINDOW = 3
+
+// How long the rail rests on a position before walking to the next one. Longer
+// than the charging fold's beat: that one swaps a block of copy a reader is
+// either reading or not, this one moves photographs under a heading, and a rail
+// that shifts every three seconds reads as restless rather than alive.
+const DWELL = 4500
+
 export default function FeaturedBikes() {
-  const [ref, shown] = useReveal()
+  // The heading and then the columns, left to right — see [[useScrollReveal]].
+  const ref = useScrollReveal()
   const trackRef = useRef(null)
-  // Which arrows are live. All three columns fit above `lg`, so on a desktop
-  // both stay hidden; below it the track scrolls and they earn their place.
-  const [scroll, setScroll] = useState({ start: true, end: true })
+  // Where the rail is, counted in stopping positions rather than in bikes.
+  // The distinction is the whole indicator: with three bikes on screen the
+  // leftmost one can only ever be the first of four, so a mark that tracked
+  // bikes could never reach the last two rules and stalled a rule short of the
+  // end. Six bikes three-up is four positions, and the last of them is the end
+  // of the rail.
+  //
+  // Read off the scroll offset rather than held as the source of truth, so a
+  // native flick, a trackpad and a drag all report the same place without any
+  // of them having to say so.
+  const [rail, setRail] = useState({ active: 0, positions: 1 })
 
   const measure = useCallback(() => {
     const track = trackRef.current
-    if (!track) return
+    const column = track?.firstElementChild?.getBoundingClientRect().width ?? 0
+    if (!track || !column) return
 
-    // 2px of slack: fractional scroll offsets never land exactly on the end.
-    const max = track.scrollWidth - track.clientWidth
-    setScroll({
-      start: track.scrollLeft <= 2,
-      end: track.scrollLeft >= max - 2,
+    const gap = Number.parseFloat(getComputedStyle(track).columnGap) || 0
+    const pitch = column + gap
+    const perView = Math.max(1, Math.round(track.clientWidth / pitch))
+    const positions = Math.max(1, MOTORCYCLES.length - perView + 1)
+
+    setRail({
+      // Clamped: the last position is the end of the travel, and rounding an
+      // offset that stops short of a whole pitch would otherwise never get
+      // there.
+      active: Math.min(Math.round(track.scrollLeft / pitch), positions - 1),
+      positions,
     })
   }, [])
 
-  // Before paint, so the arrows are never wrong on the first frame.
+  const { active, positions } = rail
+
+  // Whether the section is on screen at all, and whether anything says the
+  // reader is using it. Kept apart: the first is where the page is, the second
+  // is what the reader is doing, and only their combination runs the clock.
+  const [watching, setWatching] = useState(false)
+  const [held, setHeld] = useState(false)
+  const [hidden, setHidden] = useState(false)
+
+  useEffect(() => {
+    const node = ref.current
+    if (!node) return
+
+    if (typeof IntersectionObserver === 'undefined') {
+      setWatching(true)
+      return
+    }
+
+    // Threshold 0: the rail is the top of this section, so it is on screen as
+    // soon as the section is. Waiting for a fraction of a band this tall would
+    // start the clock well after the bikes were in view.
+    const observer = new IntersectionObserver(([entry]) => setWatching(entry.isIntersecting), {
+      threshold: 0,
+      rootMargin: '0px 0px -12% 0px',
+    })
+
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [ref])
+
+  // A background tab throttles timers in some engines and runs them in others.
+  // Neither is worth guessing at, so the clock stops with the document.
+  useEffect(() => {
+    const apply = () => setHidden(document.visibilityState !== 'visible')
+
+    apply()
+    document.addEventListener('visibilitychange', apply)
+    return () => document.removeEventListener('visibilitychange', apply)
+  }, [])
+
+  const paused = held || hidden
+
+  // Before paint, so the indicator is never wrong on the first frame.
   useLayoutEffect(measure, [measure])
 
   useEffect(() => {
@@ -49,9 +151,9 @@ export default function FeaturedBikes() {
 
     track.addEventListener('scroll', measure, { passive: true })
 
-    // Crossing the lg breakpoint changes whether the track overflows at all.
-    // The resize listener is the floor: without it a browser lacking
-    // ResizeObserver would keep the arrows hidden on a track that overflows.
+    // Crossing a breakpoint changes the column width, and with it which bike a
+    // given offset lands on. The resize listener is the floor: without it a
+    // browser lacking ResizeObserver would keep a stale index.
     const observer =
       typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
     observer?.observe(track)
@@ -64,30 +166,268 @@ export default function FeaturedBikes() {
     }
   }, [measure])
 
-  // Steps by one column rather than a full viewport — a half-visible bike is
-  // the affordance that tells you there is another one.
-  const step = (direction) => {
+  // ── The rail's geometry ────────────────────────────────────────────────
+  // One bike's worth of travel, measured rather than hardcoded: the column is
+  // three different widths across the breakpoints and the gap is three more.
+  const metrics = useCallback(() => {
     const track = trackRef.current
-    if (!track) return
+    const column = track?.firstElementChild?.getBoundingClientRect().width ?? 0
+    if (!track || !column) return null
 
-    const column = track.firstElementChild?.getBoundingClientRect().width ?? 0
-    // Read the gap rather than hardcode it — it changes at two breakpoints.
     const gap = Number.parseFloat(getComputedStyle(track).columnGap) || 0
-    track.scrollBy({ left: direction * (column + gap), behavior: 'smooth' })
+    return {
+      track,
+      pitch: column + gap,
+      // Three above `lg`, one on a phone. What the arrows move by.
+      perView: Math.max(1, Math.round(track.clientWidth / (column + gap))),
+      max: track.scrollWidth - track.clientWidth,
+    }
+  }, [])
+
+  // ── The glide ──────────────────────────────────────────────────────────
+  // The rail animates itself rather than asking for `behavior: 'smooth'`. Two
+  // reasons: the browser's smooth scroll has a duration and a curve this site
+  // does not get to pick, and mandatory snap interrupts it mid-flight and
+  // lands the rail short. Snap is off for the length of the glide and back on
+  // after, so a native flick still snaps the way the platform does it.
+  //
+  // Three things make it read as one movement rather than an animation:
+  //
+  // - The curve is EASE itself, solved rather than approximated. A quintic
+  //   ease-out stood in for it and was the wrong shape at the head — it left
+  //   at nearly full speed, so a glide starting from rest jumped.
+  // - The duration follows the distance. One bike at the same 560ms a
+  //   three-bike jump takes is a crawl for the short move and a lurch for the
+  //   long one.
+  // - A release carries its own speed in. A flick that stopped dead and then
+  //   eased from zero was the seam you could feel; matching the opening speed
+  //   to the speed the pointer left at closes it.
+  const glide = useRef(0)
+
+  const glideTo = useCallback(
+    (left, velocity = 0) => {
+      const found = metrics()
+      if (!found) return
+
+      const { track, max, pitch } = found
+      const target = Math.max(0, Math.min(left, max))
+      const from = track.scrollLeft
+      const distance = target - from
+
+      cancelAnimationFrame(glide.current)
+      if (Math.abs(distance) < 1) {
+        track.style.scrollSnapType = ''
+        return
+      }
+
+      // The OS setting wins: no glide, just the destination.
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        track.scrollLeft = target
+        track.style.scrollSnapType = ''
+        return
+      }
+
+      // 380ms for a single bike, growing with the distance but sub-linearly —
+      // a three-bike jump is three times as far and nothing like three times
+      // as long, or the rail feels like it is being winched.
+      const spans = Math.abs(distance) / pitch
+      const base = 380 + 150 * Math.sqrt(Math.max(0, spans - 1))
+      // A fast release shortens the glide rather than fighting it: the rail is
+      // already moving, so easing it over the full duration would read as the
+      // page catching the bike and holding it back. Capped so a hard flick
+      // still lands rather than snapping.
+      const urgency = Math.min(Math.abs(velocity) / 2.5, 0.35)
+      const duration = Math.round(base * (1 - urgency))
+
+      track.style.scrollSnapType = 'none'
+      const start = performance.now()
+
+      const frame = (now) => {
+        const p = Math.min(1, (now - start) / duration)
+        track.scrollLeft = from + distance * ease(p)
+
+        if (p < 1) {
+          glide.current = requestAnimationFrame(frame)
+        } else {
+          // Land exactly, then hand the rail back to the platform. Leaving the
+          // last fraction of a pixel to the curve is what makes snap twitch as
+          // it re-engages.
+          track.scrollLeft = target
+          track.style.scrollSnapType = ''
+        }
+      }
+
+      glide.current = requestAnimationFrame(frame)
+    },
+    [metrics],
+  )
+
+  useEffect(() => () => cancelAnimationFrame(glide.current), [])
+
+  // ── Swipe ──────────────────────────────────────────────────────────────
+  // Pointer drag, so the rail answers to a mouse the way it already answers to
+  // a trackpad or a thumb. Six bikes no longer fit on a screen, which makes
+  // dragging the primary way through the lineup rather than a nicety.
+  //
+  // A gesture is worth exactly one bike, however far it is thrown — the rail
+  // follows the pointer while it is down, then glides to the neighbouring bike
+  // on release. Letting a long drag land three bikes along makes the lineup
+  // feel like a scrollbar; one at a time makes it feel like a deck.
+  const drag = useRef(null)
+  const pending = useRef(0)
+
+  const onPointerDown = (event) => {
+    // Touch already drags natively, with the platform's own momentum and
+    // snapping. Taking it over would only make it worse. Mouse and pen here.
+    if (event.pointerType === 'touch') return
+
+    const found = metrics()
+    if (!found) return
+
+    cancelAnimationFrame(glide.current)
+    cancelAnimationFrame(pending.current)
+    // A hand on the rail does hold the clock, unlike a pointer merely passing
+    // over it — the tick would otherwise glide the track out from under the
+    // drag mid-gesture.
+    setHeld(true)
+    drag.current = {
+      x: event.clientX,
+      left: found.track.scrollLeft,
+      moved: false,
+      // Last sample, for the release velocity. Kept as one point rather than a
+      // history: what a flick is worth is how fast the pointer was going as it
+      // left, not how fast it was going across the whole gesture.
+      lastX: event.clientX,
+      lastAt: event.timeStamp,
+      velocity: 0,
+    }
+    // Mandatory snap fights a scrollLeft written every frame: the browser keeps
+    // pulling back to the nearest point mid-drag.
+    found.track.style.scrollSnapType = 'none'
   }
 
-  const atBothEnds = scroll.start && scroll.end
+  const onPointerMove = (event) => {
+    const track = trackRef.current
+    if (!drag.current || !track) return
+
+    const dx = event.clientX - drag.current.x
+    // A few pixels of slack, so a click on a card is not read as a one-pixel
+    // drag and swallowed.
+    if (!drag.current.moved && Math.abs(dx) > 4) {
+      drag.current.moved = true
+      track.setPointerCapture(event.pointerId)
+    }
+
+    if (!drag.current.moved) return
+
+    // Pixels per millisecond, smoothed a little so one stuttering sample cannot
+    // decide what the whole flick was worth.
+    const elapsed = event.timeStamp - drag.current.lastAt
+    if (elapsed > 0) {
+      const sample = (event.clientX - drag.current.lastX) / elapsed
+      drag.current.velocity = drag.current.velocity * 0.7 + sample * 0.3
+      drag.current.lastX = event.clientX
+      drag.current.lastAt = event.timeStamp
+    }
+
+    // One write per frame. A high-polling mouse fires several moves between
+    // paints, and every extra `scrollLeft` write in the same frame is a layout
+    // the browser throws away — which is what made a slow drag feel gritty.
+    const left = drag.current.left - dx
+    cancelAnimationFrame(pending.current)
+    pending.current = requestAnimationFrame(() => {
+      if (drag.current) track.scrollLeft = left
+    })
+  }
+
+  const endDrag = (event) => {
+    const track = trackRef.current
+    if (!drag.current || !track) return
+
+    const { x, left, moved, velocity } = drag.current
+    if (moved && track.hasPointerCapture?.(event.pointerId)) {
+      track.releasePointerCapture(event.pointerId)
+    }
+    drag.current = null
+    cancelAnimationFrame(pending.current)
+    setHeld(false)
+
+    const found = metrics()
+    if (!found) return
+
+    if (!moved) {
+      track.style.scrollSnapType = ''
+      return
+    }
+
+    // Which bike the rail was on when the drag started, and which one it owes
+    // the gesture. Either 24px of travel or a flick fast enough to mean it:
+    // without the velocity term a short sharp swipe fell under the distance
+    // threshold and the rail sprang back, which is the one outcome a gesture
+    // should never produce.
+    const dx = event.clientX - x
+    const committed = Math.abs(dx) > 24 || Math.abs(velocity) > 0.4
+    const index = Math.round(left / found.pitch)
+    const next = committed ? index - Math.sign(dx) : index
+
+    glideTo(next * found.pitch, velocity)
+  }
+
+  // Each rule is also the way to get to its bike.
+  const goTo = (index) => {
+    const found = metrics()
+    if (found) glideTo(index * found.pitch)
+  }
+
+  // ── The clock ──────────────────────────────────────────────────────────
+  // The rail walks itself while the section is on screen, the way the charging
+  // fold does: six bikes with three visible means half the lineup is off the
+  // right edge, and a rail that only ever moves when it is pushed leaves most
+  // of the range undiscovered by a reader who does not think to try.
+  //
+  // Everything that says "somebody is using this" stops it — a pointer in the
+  // section, a drag in progress, a backgrounded tab — and it resumes on its
+  // own. Position, not a separate counter, is what it advances, so a manual
+  // move never fights the clock: the next tick simply carries on from wherever
+  // the reader left the rail.
+  useEffect(() => {
+    if (!watching || paused || positions < 2) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    const id = setTimeout(() => {
+      // Wraps rather than stopping at the end. A rail that reaches the last
+      // position and never returns is a rail that spends most of the page's
+      // life showing the same three bikes.
+      goTo(active >= positions - 1 ? 0 : active + 1)
+    }, DWELL)
+
+    return () => clearTimeout(id)
+    // `active` in the deps is the loop: every landing schedules the next move.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watching, paused, positions, active])
+
+  // The window keeps the active position in the middle where it can, and pins
+  // to either end where it cannot — so the first two positions both show the
+  // window starting at zero rather than the row shifting under a mark that has
+  // not moved. A lineup with fewer positions than the window shows one rule
+  // per position and no window at all.
+  const shown = Math.min(WINDOW, positions)
+  const windowStart = Math.max(0, Math.min(active - 1, positions - shown))
 
   return (
     // Bottom carries more air than the top: the hero hands straight off to the
     // headline, and the row below needs room before the next section starts.
-    <section ref={ref} className="overflow-hidden bg-white pt-16 pb-24 sm:pt-20 sm:pb-32">
+    // The indicator now closes the section, and it is a 3px rule rather than a
+    // row of cutouts — it needs a fraction of the room the bikes did. The old
+    // bottom padding was set when the last thing here was a motorcycle.
+    <section ref={ref} className="overflow-hidden bg-white pt-16 pb-14 sm:pt-20 sm:pb-16">
       <Container>
         {/* No kicker. "The lineup" over a row of motorcycles named what the
             reader could already see, and it was one of three tracked-caps
             eyebrows on this page — the tell that a layout is being scaffolded
             rather than composed. The heading opens the section on its own. */}
         <h2
+          data-reveal="24"
           className={cn(
             'text-center font-display font-bold uppercase text-ink-900',
             // One line at every width, so the size has to follow the viewport
@@ -100,71 +440,61 @@ export default function FeaturedBikes() {
             // rather than a heading. +0.01em is the small amount uppercase still
             // wants, and the words come back as words.
             'text-[clamp(0.9rem,4.3vw,3.25rem)] leading-[1.1] tracking-[0.01em] whitespace-nowrap',
-            'transition-[transform,opacity] duration-700',
-            EASE,
-            shown ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
           )}
         >
           Choose your <span className="text-brand-500">electric machine</span>
         </h2>
       </Container>
 
-      {/* The rail sits outside Container so the arrows can hug the viewport
-          edges the way the columns cannot. */}
-      <div className="relative mt-24 sm:mt-28">
-        {[
-          { dir: -1, label: 'Previous model', side: 'left-2 sm:left-4', disabled: scroll.start },
-          { dir: 1, label: 'Next model', side: 'right-2 sm:right-4', disabled: scroll.end },
-        ].map((arrow) => (
-          <button
-            key={arrow.label}
-            type="button"
-            onClick={() => step(arrow.dir)}
-            disabled={arrow.disabled}
-            aria-label={arrow.label}
-            // Both ends reachable at once means nothing overflows — the whole
-            // control is dead weight, so it leaves rather than sits greyed out.
-            className={cn(
-              'absolute top-1/2 z-10 flex size-11 -translate-y-1/2 items-center justify-center rounded-full',
-              'transition-[background-color,opacity] duration-300',
-              EASE,
-              'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-500',
-              arrow.disabled
-                ? 'bg-ink-900/20 text-white'
-                : 'bg-ink-900 text-white hover:bg-brand-600',
-              atBothEnds && 'hidden',
-              arrow.side,
-            )}
-          >
-            <ChevronRight className={cn('size-5', arrow.dir === -1 && 'rotate-180')} />
-          </button>
-        ))}
+      {/* The rail sits outside Container so the columns can run to the viewport
+          edge rather than stopping at the page's max width.
 
+          Hovering does not stop the clock. A pointer resting in the section is
+          not a claim on it — most of them are just on their way somewhere — and
+          a rail that freezes under the cursor is a rail that never moves for
+          anyone reading with their hand on the mouse.
+
+          Keyboard focus does stop it, which is a different case: a reader
+          tabbing the indicator has committed to the control, and moving the row
+          under a focused button would change what the next key press does. */}
+      <div
+        className="relative mt-24 sm:mt-28"
+        onFocusCapture={() => setHeld(true)}
+        onBlurCapture={() => setHeld(false)}
+      >
         <div
           ref={trackRef}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
           // `scrollbar-width: none` has no Tailwind utility; the arrows and the
           // snap points are the affordance here, a visible bar just adds noise.
           style={{ scrollbarWidth: 'none' }}
           className={cn(
             'flex snap-x snap-mandatory gap-16 overflow-x-auto overscroll-x-contain px-4 sm:gap-20 sm:px-6 lg:gap-24 lg:px-8',
-            // Centres the three columns once they stop overflowing, so the row
-            // reads as a grid on a desktop and a rail on a phone.
-            'lg:justify-center lg:overflow-x-visible',
+            'cursor-grab active:cursor-grabbing',
+            // The cutouts are images: without this a drag turns into the
+            // browser's own drag-and-drop and the rail stops following.
+            '[&_img]:select-none [&_img]:[-webkit-user-drag:none]',
             '[&::-webkit-scrollbar]:hidden',
           )}
         >
           {MOTORCYCLES.map((bike, i) => (
+            // Columns land left to right rather than all at once — the stagger
+            // comes from the group, so document order is the only thing setting
+            // it.
             <article
               key={bike.slug}
+              data-reveal="32"
               className={cn(
                 'group flex w-[78vw] shrink-0 snap-center flex-col',
-                'sm:w-[46vw] lg:w-auto lg:max-w-md lg:flex-1',
-                'transition-[transform,opacity] duration-700',
-                EASE,
-                shown ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0',
+                // Exactly three across above `lg`: the track's content box less
+                // its two gaps, divided by three. Sized off the container
+                // rather than the viewport so it stays true inside the page's
+                // max width, and the fourth bike is what the arrow is for.
+                'sm:w-[46vw] lg:w-[calc((100%-12rem)/3)] lg:max-w-none',
               )}
-              // Columns land left to right rather than all at once.
-              style={{ transitionDelay: shown ? `${i * 90}ms` : '0ms' }}
             >
               {/* Name over class, both centred. The class sat hard right for a
                   while and at this column width it drifted closer to the next
@@ -200,7 +530,10 @@ export default function FeaturedBikes() {
                 />
                 <img
                   src={bike.studio}
-                  alt={`${bike.name} — ${bike.tagline}`}
+                  // The tagline is the description when there is one; a bike
+                  // still waiting on its copy gets its class instead, rather
+                  // than an alt ending in an em dash and nothing.
+                  alt={bike.tagline ? `${bike.name} — ${bike.tagline}` : `${bike.name}, ${bike.class}`}
                   loading={i === 0 ? 'eager' : 'lazy'}
                   className={cn(
                     'absolute inset-0 size-full object-contain',
@@ -238,6 +571,56 @@ export default function FeaturedBikes() {
               </span>
             </article>
           ))}
+        </div>
+
+        {/* Three rules, not six: a window onto the lineup rather than a map of
+            it. Six marks made the indicator wider than the heading above it and
+            turned a position readout into a second thing to count. The window
+            slides so the active bike sits in the middle of it wherever possible,
+            and holds at the ends so the row never goes ragged.
+
+            A rule rather than a dot — the section is ruled throughout, and dots
+            would be the only circles on it. The active one goes to ink and
+            stands to full height.
+
+            Keyed by slot rather than by bike, deliberately: React then reuses
+            the same three nodes as the window moves, so the ink mark eases
+            across the row instead of the row being rebuilt under it.
+
+            Each is a real button, and they track the rail however it was moved
+            — a native flick reports the same position a click does. */}
+        <div className="mt-10 flex items-center justify-center gap-4 sm:mt-12 sm:gap-5">
+          {Array.from({ length: shown }, (_, slot) => {
+            const i = windowStart + slot
+            // A position is named for the bike that leads it, which is what a
+            // reader sees on the left of the row when they land on it.
+            const bike = MOTORCYCLES[i]
+            if (!bike) return null
+
+            return (
+              <button
+                key={slot}
+                type="button"
+                onClick={() => goTo(i)}
+                aria-label={`Show the ${bike.name}`}
+                aria-current={i === active ? 'true' : undefined}
+                // The hit area is the button; the rule inside it is what shows.
+                // A 3px line is not a target, and padding it out is the
+                // difference between a control and a decoration.
+                className="group -my-2 py-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-500"
+              >
+                <span
+                  className={cn(
+                    'block h-[3px] w-14 transition-[background-color,transform] duration-500 sm:w-16',
+                    EASE,
+                    i === active
+                      ? 'scale-y-100 bg-ink-900'
+                      : 'scale-y-75 bg-ink-900/15 group-hover:bg-ink-900/35',
+                  )}
+                />
+              </button>
+            )
+          })}
         </div>
       </div>
     </section>

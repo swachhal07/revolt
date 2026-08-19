@@ -6,9 +6,21 @@ import { cn } from '@/utils/cn'
  * Full-bleed hero: the film plays on its own loop and nothing advances past it
  * unless a visitor picks one of the stills from the rail on the right.
  * Every asset lives in `public/` — they are large binaries, so they stay out of
- * the bundle graph and get served directly. The video master (600 MB, 1080p
- * 50 Mbps) is transcoded to 720p ~1 Mbps and the stills to ~100 KB WebP;
- * re-run those steps if any of them is replaced.
+ * the bundle graph and get served directly. The stills are ~100 KB WebP; re-run
+ * that step if any of them is replaced.
+ *
+ * THE FILM IS THE MASTER, NOT A WEB CUT. `rvx-3d.mp4` is the RVX 3D product
+ * video copied in byte-for-byte on request: 2560x1440, 30 fps, 10 Mbps, 2:12
+ * long, 173 MB. That is roughly fifteen times the weight of the 720p ~1 Mbps
+ * cut it replaced, and it is the first thing the home page asks a visitor to
+ * download. It carries an audio track too, which the element mutes.
+ *
+ * If it is ever allowed to be transcoded, this is the step — same frame, same
+ * cut, web bitrate, moov atom in front:
+ *
+ *   ffmpeg -i "src/assets/images/RVX 3D_Product_Video.mp4" \
+ *     -vf scale=1280:-2 -c:v libx264 -preset slow -crf 24 \
+ *     -an -movflags +faststart public/videos/rvx-3d.mp4
  */
 // `position` is the object-position of the crop. Below 50% the window sits
 // higher in the frame, so the rider's helmet clears the navbar instead of
@@ -16,8 +28,8 @@ import { cn } from '@/utils/cn'
 const SLIDES = [
   {
     type: 'video',
-    src: '/videos/hero.mp4',
-    poster: '/videos/hero-poster.jpg',
+    src: '/videos/rvx-3d.mp4',
+    poster: '/videos/rvx-3d-poster.jpg',
   },
   {
     type: 'image',
@@ -38,6 +50,14 @@ const SLIDES = [
     position: 'center 30%',
   },
 ]
+
+// The film opens on twelve seconds of logo sting: a glowing mark, the wordmark
+// resolving at 8.2s, then the mark again in dark relief from ~11.5s before the
+// first bike shot lands around 14s. The hero starts on that last mark, so the
+// brand reads for a beat and the product arrives a second and a half later
+// instead of five. Every seek in this component goes here, the loop included:
+// `loop` on the element would wrap to zero and replay the whole sting.
+const FILM_START = 12
 
 export default function Hero() {
   const [index, setIndex] = useState(0)
@@ -62,12 +82,30 @@ export default function Hero() {
     if (!video) return
 
     if (index === 0 && !still) {
-      video.currentTime = 0
+      video.currentTime = FILM_START
       video.play().catch(() => {})
     } else {
       video.pause()
     }
   }, [index, still])
+
+  // `autoPlay` starts the file at zero before any of the above runs, and a seek
+  // needs metadata to have landed, so the opening position is set here too —
+  // whichever fires first wins and the other is a no-op.
+  const seekToStart = () => {
+    const video = videoRef.current
+    if (video && video.currentTime < FILM_START) video.currentTime = FILM_START
+  }
+
+  // Standing in for the `loop` attribute, which would wrap to zero. `ended`
+  // only fires because `loop` is off.
+  const restart = () => {
+    const video = videoRef.current
+    if (!video) return
+
+    video.currentTime = FILM_START
+    video.play().catch(() => {})
+  }
 
   return (
     <section className="relative isolate min-h-svh overflow-hidden bg-ink-950 text-white">
@@ -82,9 +120,10 @@ export default function Hero() {
             )}
             src={slide.src}
             poster={slide.poster}
+            onLoadedMetadata={seekToStart}
+            onEnded={restart}
             autoPlay
             muted
-            loop
             playsInline
             preload="metadata"
             aria-hidden="true"
