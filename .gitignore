@@ -39,6 +39,6 @@ src/assets/images/RV_BlazeX.mp4
 # 100MB blob limit, and Git LFS is not a way around it here: Vercel clones
 # without resolving LFS, so it would deploy the pointer file and serve 130 bytes
 # of text as an MP4. It is hosted on Vercel Blob instead — see
-# src/constants/media.js. Keep the local copy: with VITE_MEDIA_BASE_URL unset,
+# src/constants/media.js. Keep the local copy: with VITE_HERO_FILM_URL unset,
 # dev serves the hero straight from this path.
 public/videos/rvx-3d.mp4
