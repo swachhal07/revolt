@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import Container from '@/components/ui/Container'
 import { ChevronRight } from '@/components/ui/icons'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
@@ -81,24 +81,57 @@ export default function FeaturedBikes() {
   // of them having to say so.
   const [rail, setRail] = useState({ active: 0, positions: 1 })
 
-  const measure = useCallback(() => {
+  // ── Geometry, measured once per layout ─────────────────────────────────
+  // The column is three different widths across the breakpoints and the gap is
+  // three more, so none of this can be hardcoded — but none of it changes while
+  // the reader is scrolling either. It is read when the layout changes and
+  // cached, because the alternative is a `getComputedStyle` and a forced layout
+  // on every scroll event, and a trackpad swipe fires those continuously.
+  const geometry = useRef(null)
+
+  const readGeometry = useCallback(() => {
     const track = trackRef.current
     const column = track?.firstElementChild?.getBoundingClientRect().width ?? 0
-    if (!track || !column) return
+    if (!track || !column) return null
 
     const gap = Number.parseFloat(getComputedStyle(track).columnGap) || 0
     const pitch = column + gap
+    // Three above `lg`, one on a phone. What the arrows move by.
     const perView = Math.max(1, Math.round(track.clientWidth / pitch))
-    const positions = Math.max(1, MOTORCYCLES.length - perView + 1)
 
-    setRail({
-      // Clamped: the last position is the end of the travel, and rounding an
-      // offset that stops short of a whole pitch would otherwise never get
-      // there.
-      active: Math.min(Math.round(track.scrollLeft / pitch), positions - 1),
-      positions,
-    })
+    geometry.current = {
+      pitch,
+      perView,
+      positions: Math.max(1, MOTORCYCLES.length - perView + 1),
+    }
+    return geometry.current
   }, [])
+
+  // The scroll handler, and so the hottest path in the section: arithmetic on a
+  // cached pitch and nothing else.
+  //
+  // The bail-out is the point. `active` only changes when the rail crosses a
+  // position boundary, which is a handful of times per gesture, but scroll fires
+  // on every frame of one. Returning `prev` unchanged is what stops React
+  // re-rendering the row sixty times a second to produce the same markup — and
+  // rebuilding six cards means thirty `cn()` calls, each of them a tailwind-merge
+  // parse. Allocating a fresh `{ active, positions }` here, equal to the last one
+  // or not, was the whole of the lag.
+  const measure = useCallback(() => {
+    const track = trackRef.current
+    const geo = geometry.current ?? readGeometry()
+    if (!track || !geo) return
+
+    // Clamped: the last position is the end of the travel, and rounding an
+    // offset that stops short of a whole pitch would otherwise never get there.
+    const active = Math.min(Math.round(track.scrollLeft / geo.pitch), geo.positions - 1)
+
+    setRail((prev) =>
+      prev.active === active && prev.positions === geo.positions
+        ? prev
+        : { active, positions: geo.positions },
+    )
+  }, [readGeometry])
 
   const { active, positions } = rail
 
@@ -143,7 +176,10 @@ export default function FeaturedBikes() {
   const paused = held || hidden
 
   // Before paint, so the indicator is never wrong on the first frame.
-  useLayoutEffect(measure, [measure])
+  useLayoutEffect(() => {
+    readGeometry()
+    measure()
+  }, [readGeometry, measure])
 
   useEffect(() => {
     const track = trackRef.current
@@ -151,38 +187,46 @@ export default function FeaturedBikes() {
 
     track.addEventListener('scroll', measure, { passive: true })
 
-    // Crossing a breakpoint changes the column width, and with it which bike a
-    // given offset lands on. The resize listener is the floor: without it a
-    // browser lacking ResizeObserver would keep a stale index.
+    // Crossing a breakpoint changes the column width, and with it the pitch every
+    // offset is read against — so a resize re-reads the geometry before it asks
+    // where the rail is. This is the only path that does; scrolling never
+    // invalidates it.
+    //
+    // The resize listener is the floor: without it a browser lacking
+    // ResizeObserver would keep a stale pitch.
+    const remeasure = () => {
+      readGeometry()
+      measure()
+    }
+
     const observer =
-      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
+      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(remeasure)
     observer?.observe(track)
-    window.addEventListener('resize', measure)
+    window.addEventListener('resize', remeasure)
 
     return () => {
       track.removeEventListener('scroll', measure)
-      window.removeEventListener('resize', measure)
+      window.removeEventListener('resize', remeasure)
       observer?.disconnect()
     }
-  }, [measure])
+  }, [measure, readGeometry])
 
-  // ── The rail's geometry ────────────────────────────────────────────────
-  // One bike's worth of travel, measured rather than hardcoded: the column is
-  // three different widths across the breakpoints and the gap is three more.
+  // ── The rail's geometry, as the gestures want it ────────────────────────
+  // The cached pitch plus the one figure that is cheap and has to be live:
+  // `max` is the end of the travel, and it is read straight off the element
+  // because a glide clamps against it.
   const metrics = useCallback(() => {
     const track = trackRef.current
-    const column = track?.firstElementChild?.getBoundingClientRect().width ?? 0
-    if (!track || !column) return null
+    const geo = geometry.current ?? readGeometry()
+    if (!track || !geo) return null
 
-    const gap = Number.parseFloat(getComputedStyle(track).columnGap) || 0
     return {
       track,
-      pitch: column + gap,
-      // Three above `lg`, one on a phone. What the arrows move by.
-      perView: Math.max(1, Math.round(track.clientWidth / (column + gap))),
+      pitch: geo.pitch,
+      perView: geo.perView,
       max: track.scrollWidth - track.clientWidth,
     }
-  }, [])
+  }, [readGeometry])
 
   // ── The glide ──────────────────────────────────────────────────────────
   // The rail animates itself rather than asking for `behavior: 'smooth'`. Two
@@ -414,6 +458,112 @@ export default function FeaturedBikes() {
   const shown = Math.min(WINDOW, positions)
   const windowStart = Math.max(0, Math.min(active - 1, positions - shown))
 
+  // ── The cards ──────────────────────────────────────────────────────────
+  // Built once. Nothing in a card reads the rail's position — the row moves by
+  // scroll offset, and the active mark lives in the indicator below — so there
+  // is no render in which these come out different.
+  //
+  // Held rather than rebuilt because of what a rebuild costs: six cards at five
+  // `cn()` calls each is thirty tailwind-merge parses, and `measure` runs on
+  // every scroll event. Same element references means React reconciles the
+  // subtree by identity and skips it, so an indicator update stays an indicator
+  // update rather than touching the row.
+  const cards = useMemo(
+    () =>
+      MOTORCYCLES.map((bike, i) => (
+        // Columns land left to right rather than all at once — the stagger
+        // comes from the group, so document order is the only thing setting
+        // it.
+        <article
+          key={bike.slug}
+          data-reveal="32"
+          className={cn(
+            'group flex w-[78vw] shrink-0 snap-center flex-col',
+            // Exactly three across above `lg`: the track's content box less
+            // its two gaps, divided by three. Sized off the container
+            // rather than the viewport so it stays true inside the page's
+            // max width, and the fourth bike is what the arrow is for.
+            'sm:w-[46vw] lg:w-[calc((100%-12rem)/3)] lg:max-w-none',
+          )}
+        >
+          {/* Name over class, both centred. The class sat hard right for a
+              while and at this column width it drifted closer to the next
+              bike's name than to its own. No rule and no badge here — the
+              spacing does the separating. */}
+          <div className="flex flex-col items-center gap-2.5 pb-4 text-center">
+            <h3 className="font-display text-2xl font-bold tracking-[0.02em] text-ink-900 sm:text-[1.75rem]">
+              {bike.name}
+            </h3>
+            <span className="text-[11px] font-semibold tracking-[0.18em] uppercase text-ink-500">
+              {bike.class}
+            </span>
+          </div>
+
+          {/* Fixed aspect so three bikes of different lengths still share a
+              baseline and the row never goes ragged. The photograph is
+              taken out of flow below: `aspect-ratio` only sets a preferred
+              height, so an in-flow image taller than the ratio stretches
+              its own box and drops that column out of alignment with the
+              two beside it — and lazy neighbours would do it on load. */}
+          <div className="relative mt-10 aspect-4/3 w-full">
+            {/* Cast shadow. Without it the cutout floats — and it is tinted
+                with the ink hue rather than pure black. */}
+            <div
+              aria-hidden="true"
+              className={cn(
+                'absolute bottom-[8%] left-1/2 h-5 w-[70%] -translate-x-1/2 rounded-[50%]',
+                'bg-ink-900/15 blur-xl',
+                'transition-[transform,opacity] duration-500',
+                EASE,
+                'group-hover:scale-x-105 group-hover:opacity-70',
+              )}
+            />
+            <img
+              src={bike.studio}
+              // The tagline is the description when there is one; a bike
+              // still waiting on its copy gets its class instead, rather
+              // than an alt ending in an em dash and nothing.
+              alt={bike.tagline ? `${bike.name} — ${bike.tagline}` : `${bike.name}, ${bike.class}`}
+              loading={i === 0 ? 'eager' : 'lazy'}
+              className={cn(
+                'absolute inset-0 size-full object-contain',
+                'transition-transform duration-500',
+                EASE,
+                // Lifts off its shadow rather than just scaling up.
+                'group-hover:-translate-y-2',
+              )}
+            />
+          </div>
+
+          {/* Deliberately inert: this used to open the bike's detail page,
+              and it does not navigate any more. A span rather than a dead
+              <Link> or a no-op <button> — a control that announces itself to
+              a screen reader or takes a tab stop and then does nothing is
+              worse than plain text. The card's hover still animates it, so
+              it reads as part of the card rather than as a broken link. */}
+          <span
+            className={cn(
+              'mt-8 inline-flex items-center gap-2 self-center text-xs font-semibold tracking-[0.16em] uppercase',
+              'text-ink-900 underline decoration-ink-900/25 decoration-1 underline-offset-[7px]',
+              'transition-colors duration-300',
+              EASE,
+              'group-hover:text-brand-600 group-hover:decoration-brand-600',
+            )}
+          >
+            Configure
+            <ChevronRight
+              className={cn(
+                'size-3 transition-transform duration-300',
+                EASE,
+                'group-hover:translate-x-1',
+              )}
+            />
+          </span>
+        </article>
+      )),
+    [],
+  )
+
   return (
     // Bottom carries more air than the top: the hero hands straight off to the
     // headline, and the row below needs room before the next section starts.
@@ -480,97 +630,7 @@ export default function FeaturedBikes() {
             '[&::-webkit-scrollbar]:hidden',
           )}
         >
-          {MOTORCYCLES.map((bike, i) => (
-            // Columns land left to right rather than all at once — the stagger
-            // comes from the group, so document order is the only thing setting
-            // it.
-            <article
-              key={bike.slug}
-              data-reveal="32"
-              className={cn(
-                'group flex w-[78vw] shrink-0 snap-center flex-col',
-                // Exactly three across above `lg`: the track's content box less
-                // its two gaps, divided by three. Sized off the container
-                // rather than the viewport so it stays true inside the page's
-                // max width, and the fourth bike is what the arrow is for.
-                'sm:w-[46vw] lg:w-[calc((100%-12rem)/3)] lg:max-w-none',
-              )}
-            >
-              {/* Name over class, both centred. The class sat hard right for a
-                  while and at this column width it drifted closer to the next
-                  bike's name than to its own. No rule and no badge here — the
-                  spacing does the separating. */}
-              <div className="flex flex-col items-center gap-2.5 pb-4 text-center">
-                <h3 className="font-display text-2xl font-bold tracking-[0.02em] text-ink-900 sm:text-[1.75rem]">
-                  {bike.name}
-                </h3>
-                <span className="text-[11px] font-semibold tracking-[0.18em] uppercase text-ink-500">
-                  {bike.class}
-                </span>
-              </div>
-
-              {/* Fixed aspect so three bikes of different lengths still share a
-                  baseline and the row never goes ragged. The photograph is
-                  taken out of flow below: `aspect-ratio` only sets a preferred
-                  height, so an in-flow image taller than the ratio stretches
-                  its own box and drops that column out of alignment with the
-                  two beside it — and lazy neighbours would do it on load. */}
-              <div className="relative mt-10 aspect-4/3 w-full">
-                {/* Cast shadow. Without it the cutout floats — and it is tinted
-                    with the ink hue rather than pure black. */}
-                <div
-                  aria-hidden="true"
-                  className={cn(
-                    'absolute bottom-[8%] left-1/2 h-5 w-[70%] -translate-x-1/2 rounded-[50%]',
-                    'bg-ink-900/15 blur-xl',
-                    'transition-[transform,opacity] duration-500',
-                    EASE,
-                    'group-hover:scale-x-105 group-hover:opacity-70',
-                  )}
-                />
-                <img
-                  src={bike.studio}
-                  // The tagline is the description when there is one; a bike
-                  // still waiting on its copy gets its class instead, rather
-                  // than an alt ending in an em dash and nothing.
-                  alt={bike.tagline ? `${bike.name} — ${bike.tagline}` : `${bike.name}, ${bike.class}`}
-                  loading={i === 0 ? 'eager' : 'lazy'}
-                  className={cn(
-                    'absolute inset-0 size-full object-contain',
-                    'transition-transform duration-500',
-                    EASE,
-                    // Lifts off its shadow rather than just scaling up.
-                    'group-hover:-translate-y-2',
-                  )}
-                />
-              </div>
-
-              {/* Deliberately inert: this used to open the bike's detail page,
-                  and it does not navigate any more. A span rather than a dead
-                  <Link> or a no-op <button> — a control that announces itself to
-                  a screen reader or takes a tab stop and then does nothing is
-                  worse than plain text. The card's hover still animates it, so
-                  it reads as part of the card rather than as a broken link. */}
-              <span
-                className={cn(
-                  'mt-8 inline-flex items-center gap-2 self-center text-xs font-semibold tracking-[0.16em] uppercase',
-                  'text-ink-900 underline decoration-ink-900/25 decoration-1 underline-offset-[7px]',
-                  'transition-colors duration-300',
-                  EASE,
-                  'group-hover:text-brand-600 group-hover:decoration-brand-600',
-                )}
-              >
-                Configure
-                <ChevronRight
-                  className={cn(
-                    'size-3 transition-transform duration-300',
-                    EASE,
-                    'group-hover:translate-x-1',
-                  )}
-                />
-              </span>
-            </article>
-          ))}
+          {cards}
         </div>
 
         {/* Three rules, not six: a window onto the lineup rather than a map of
