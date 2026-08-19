@@ -639,7 +639,19 @@ export default function FeaturedBikes() {
           // snap points are the affordance here, a visible bar just adds noise.
           style={{ scrollbarWidth: 'none' }}
           className={cn(
-            'flex snap-x snap-mandatory gap-16 overflow-x-auto overscroll-x-contain px-4 sm:gap-20 sm:px-6 lg:gap-24 lg:px-8',
+            'flex snap-x snap-mandatory gap-16 overflow-x-auto overscroll-x-contain sm:gap-20 lg:gap-24',
+            // The rail's side padding is what decides whether a card can sit in
+            // the middle of the screen. `snap-center` cannot centre the first
+            // card on its own: at `scrollLeft: 0` there is nothing left to
+            // scroll, so the card rests against the padding and the row opens
+            // 16px from the left edge with 67px of air on the right.
+            //
+            // Below `sm` one card fills the rail, so the padding is set to
+            // exactly half the space a card leaves over — (100 − 78) / 2 — and
+            // the first and last cards land dead centre with the neighbours
+            // peeking equally either side. From `sm` up two or three cards
+            // share the row and the padding goes back to being a page gutter.
+            'px-[11vw] sm:px-6 lg:px-8',
             'cursor-grab active:cursor-grabbing',
             // The cutouts are images: without this a drag turns into the
             // browser's own drag-and-drop and the rail stops following.

@@ -52,26 +52,53 @@ export default function Navbar() {
   // Any navigation closes the mobile sheet and the mega menu — otherwise either
   // one hangs over the new page. Picking a bike out of the panel is the most
   // ordinary way this happens.
+  //
+  // `hovered` is cleared here too, and that is not tidiness. A pointer cannot
+  // still be resting on a bar belonging to a page that no longer exists, and on
+  // a device where the leave event never arrives this is the only thing that
+  // puts the flag back down. Without it, arriving at home from anywhere else
+  // shows a solid bar over the hero.
   useEffect(() => {
     setOpen(false)
     setSheetSection(null)
     setMenu(false)
+    setHovered(false)
   }, [pathname])
 
   // "Solid" = white background with dark text. Always solid off the home
   // page; on home it turns solid as soon as the user scrolls or hovers the bar.
   // An open panel counts: it is grey-on-white, and a transparent bar over the
   // hero film would leave it hanging off nothing.
-  const solid = !isHome || scrolled || hovered || menu
+  //
+  // `open` counts for the same reason and was missing: the mobile sheet is a
+  // white card hanging directly off the bottom of the bar, so a transparent bar
+  // above it reads as the sheet floating unattached over the film. It used to
+  // go solid anyway, but only as a side effect of the tap registering as a
+  // hover — which is the bug below, and fixing that would have exposed this.
+  const solid = !isHome || scrolled || hovered || menu || open
 
   return (
     <header
-      onMouseEnter={() => setHovered(true)}
+      // Pointer events rather than mouse events, and only the ones a mouse
+      // actually sent. A touch fires a synthetic `mouseenter` on whatever it
+      // lands on — so tapping the hamburger set `hovered` — but it never fires
+      // the matching `mouseleave`, because a finger does not travel off an
+      // element the way a cursor does. The flag latched on and the home bar
+      // stayed solid over the hero for the rest of the session.
+      //
+      // `pointerType` is the distinction the mouse events could not make: a
+      // real cursor reports 'mouse' and gets the hover behaviour, a finger
+      // reports 'touch' and is ignored here. Touch has the sheet and the panel
+      // to open things with, and neither needs a hover state.
+      onPointerEnter={(event) => {
+        if (event.pointerType === 'mouse') setHovered(true)
+      }}
       // The panel lives inside the header, directly under the bar, so the
       // pointer never leaves this element on its way from the trigger down into
-      // the grid. That is what lets the menu close on a plain mouse-leave with
-      // no hover-intent timer anywhere in the component.
-      onMouseLeave={() => {
+      // the grid. That is what lets the menu close on a plain leave with no
+      // hover-intent timer anywhere in the component.
+      onPointerLeave={(event) => {
+        if (event.pointerType !== 'mouse') return
         setHovered(false)
         setMenu(false)
       }}

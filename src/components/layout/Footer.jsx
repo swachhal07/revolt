@@ -50,6 +50,13 @@ const LEGAL_LINKS = [
   { label: 'Privacy Policy', to: '/privacy' },
 ]
 
+// Kept here for the same reason as the legal links above: this is the footer's
+// own credit, not site navigation, and nothing else links to it.
+const DEVELOPER = {
+  name: 'Swachhal Lamsal',
+  href: 'https://swachhalportfolio.vercel.app/',
+}
+
 // The tracked-out micro-label. Used for exactly three words in this file — it
 // is a field name above a value, not a decorative heading, which is the only
 // job that spacing this wide can do without becoming costume.
@@ -134,12 +141,21 @@ export default function Footer() {
       <div className="relative mx-auto w-full max-w-[100rem] px-5 sm:px-8 lg:px-12 xl:px-16">
         {/* ── Ownership and the three answers ──────────────────────────────
             Logos left, contact right. On a phone the columns stack and the
-            hairlines drop away rather than turning into a stack of boxes. */}
+            hairlines drop away rather than turning into a stack of boxes.
+
+            Below `sm` the whole plate centres. Stacked, the left edge is no
+            longer doing any work — there is no second column for a value to
+            line up against and no hairline for it to sit beside, so a column of
+            short fields ranged left on a narrow screen reads as a list that has
+            lost its container rather than as a plate. Centred, each label sits
+            over its own value on one axis and the two logos above them share
+            it. Everything from `sm` up is unchanged: the moment the three
+            fields go side by side the left edge is structural again. */}
         <div
           data-reveal
           className="grid gap-12 border-b border-white/10 py-14 md:grid-cols-12 md:items-center md:gap-10 lg:py-20"
         >
-          <div className="flex items-center gap-6 md:col-span-4">
+          <div className="flex items-center gap-6 max-sm:justify-center md:col-span-4">
             {/* Black artwork on transparency — the same brightness/invert
                 treatment the navbar gives it over the hero film. */}
             <img
@@ -152,7 +168,7 @@ export default function Footer() {
             <img src={dugarLogo} alt="MV Dugar Group" className="h-11 w-auto shrink-0 lg:h-14" />
           </div>
 
-          <div className="grid gap-10 sm:grid-cols-3 sm:gap-0 md:col-span-8">
+          <div className="grid gap-10 max-sm:text-center sm:grid-cols-3 sm:gap-0 md:col-span-8">
             <div className="sm:pr-8">
               <p className={LABEL}>Visit</p>
               <p className="mt-4 font-display text-xl leading-snug text-white/90 lg:text-[1.375rem]">
@@ -247,7 +263,7 @@ export default function Footer() {
             One line: who owns it, the small print, and who built it. */}
         <div
           data-reveal
-          className="flex flex-col gap-5 py-9 sm:grid sm:grid-cols-3 sm:items-center"
+          className="flex flex-col gap-5 py-9 max-sm:items-center max-sm:text-center sm:grid sm:grid-cols-3 sm:items-center"
         >
           <p className="text-sm text-white/45">
             &copy; {year} {SITE.name}. All rights reserved.
@@ -287,7 +303,26 @@ export default function Footer() {
           </ul>
 
           <p className="text-sm text-white/45 sm:justify-self-end">
-            Developed by <span className="text-white/70">Swachhal Lamsal</span>
+            Developed by{' '}
+            {/* Underlined, unlike the legal links beside it. Those sit in a row
+                of their own where position marks them as links; this one is a
+                name inside a sentence, and mid-sentence the only thing telling
+                a reader it can be clicked is the rule under it. The site's
+                other inline links are set the same way. */}
+            <a
+              href={DEVELOPER.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                'text-white/70 underline decoration-white/25 underline-offset-4',
+                'transition-colors duration-300',
+                EASE,
+                'hover:text-white hover:decoration-white/60',
+                'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-500',
+              )}
+            >
+              {DEVELOPER.name}
+            </a>
           </p>
         </div>
       </div>
