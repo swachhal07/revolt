@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import FilmDialog from '@/components/home/FilmDialog'
 import { ChevronRight } from '@/components/ui/icons'
 import { cn } from '@/utils/cn'
 
@@ -69,6 +70,9 @@ const FILM_START = 12
 export default function Hero() {
   const [index, setIndex] = useState(0)
   const [still, setStill] = useState(false)
+  // The uncropped film, in a box. See [[FilmDialog]] — the hero's own crop is
+  // right for a background and wrong for anybody who wants to watch the thing.
+  const [film, setFilm] = useState(false)
   const videoRef = useRef(null)
 
   // `autoPlay` ignores the OS motion setting, so read it here: reduced motion
@@ -88,13 +92,16 @@ export default function Hero() {
     const video = videoRef.current
     if (!video) return
 
-    if (index === 0 && !still) {
+    if (index === 0 && !still && !film) {
       video.currentTime = FILM_START
       video.play().catch(() => {})
     } else {
+      // The dialog counts: two copies of one file playing at once is two
+      // decoders on a phone, and the one behind the backdrop is not being
+      // watched by anybody.
       video.pause()
     }
-  }, [index, still])
+  }, [index, still, film])
 
   // `autoPlay` starts the file at zero before any of the above runs, and a seek
   // needs metadata to have landed, so the opening position is set here too —
@@ -168,6 +175,62 @@ export default function Hero() {
         style={{
           backgroundImage: 'linear-gradient(to top, rgba(5,5,5,0.6), rgba(5,5,5,0))',
         }}
+      />
+
+      {/* ── Watch the full frame ────────────────────────────────────────
+          Only over the film, because it is the only slide there is a full
+          frame of — offered over a photograph it would be a button that
+          opens the wrong thing.
+
+          Bottom-right, and drawn entirely in hairlines — the pill, the disc
+          and the type all outline, nothing filled. The filled pill read as a
+          second primary action on a hero that has none, and the red disc
+          inside it put the site's accent on a control rather than on the
+          thing the control is for. What is left is legible against footage
+          because of its edge, not because of a panel behind it, which is how
+          the rest of the site draws on dark ground. It sits in the fade that
+          already darkens the bottom strip.
+
+          Right rather than left: the left edge is where the eye enters the
+          frame, and on the model pages that corner is left clear. It is the one
+          affordance on the hero that is worth more on a phone than on a
+          desktop: a 16:9 film in a portrait window loses both ends of every
+          shot, and this is where that gets handed back. */}
+      {index === 0 ? (
+        <button
+          type="button"
+          onClick={() => setFilm(true)}
+          className={cn(
+            'group absolute right-6 bottom-8 z-10 inline-flex items-center gap-3 rounded-full lg:right-10 lg:bottom-10',
+            'border border-white/30 py-3 pr-5 pl-4 text-white',
+            'transition-[border-color,background-color] duration-300 hover:border-white hover:bg-white/10',
+            'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white',
+          )}
+        >
+          <span
+            aria-hidden="true"
+            className={cn(
+              'grid size-6 place-items-center rounded-full border border-white/40',
+              'transition-colors duration-300 group-hover:border-white',
+            )}
+          >
+            {/* A triangle drawn with borders — a play mark is three points and
+                does not need an icon component of its own. Optically centred:
+                a triangle's visual centre sits behind its geometric one, so it
+                needs the half-pixel nudge a circle does not. */}
+            <span className="ml-0.5 block size-0 border-y-[4px] border-l-[7px] border-y-transparent border-l-white" />
+          </span>
+          <span className="text-[11px] font-semibold tracking-[0.2em] uppercase">
+            Watch full frame
+          </span>
+        </button>
+      ) : null}
+
+      <FilmDialog
+        open={film}
+        onClose={() => setFilm(false)}
+        src={SLIDES[0].src}
+        poster={SLIDES[0].poster}
       />
 
       {/* Step controls, pinned to the edges and out of the composition's way.

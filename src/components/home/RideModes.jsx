@@ -515,7 +515,12 @@ export default function RideModes() {
             )}
             style={{ transitionDelay: here ? '120ms' : '0ms' }}
           >
-            <span className="font-display text-[4.5rem] leading-[0.8] font-extrabold tabular-nums text-brand-500 sm:text-[5.5rem]">
+            {/* White, not brand red. Red is the site's mark for the thing being
+                sold; this figure is a nought — the count of what the bike does
+                without — and setting an absence in the accent colour spends the
+                loudest ink on the page saying "none". White at this scale
+                against the plate is already the strongest thing in the fold. */}
+            <span className="font-display text-[4.5rem] leading-[0.8] font-extrabold tabular-nums text-white sm:text-[5.5rem]">
               0
             </span>
             <span className="text-[11px] font-semibold uppercase leading-[1.5] tracking-[0.18em] text-white/70">
