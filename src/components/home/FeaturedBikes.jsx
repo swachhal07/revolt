@@ -3,14 +3,24 @@ import { Link } from 'react-router-dom'
 import Container from '@/components/ui/Container'
 import { ChevronRight } from '@/components/ui/icons'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
-import { MOTORCYCLES } from '@/data/motorcycles'
+import { HERO_MOTORCYCLES, REST_MOTORCYCLES } from '@/data/motorcycles'
 import { cn } from '@/utils/cn'
 
 /**
  * The lineup, straight under the hero: every model side by side on white so
  * the bikes carry the fold and nothing else competes with them.
  *
- * Three equal columns is the most generic shape a feature row can take, so the
+ * Two bands, not one. The RVX and the RV BlazeX are the machines the showroom
+ * leads on, so they get a row of their own at the top — two columns rather than
+ * three, which is the whole promotion: at that width each bike is roughly half
+ * again the size of one in the rail below, and a reader arriving at this section
+ * meets them before anything else. The rest of the catalogue follows in the
+ * scrolling rail underneath, at the size it always was.
+ *
+ * No badge and no "featured" ribbon marks the top row. Position and size are the
+ * hierarchy; a label saying so would be the layout explaining itself.
+ *
+ * Equal columns are the most generic shape a feature row can take, so the
  * differentiation is all in the detail — no badges, no rules, and a cast shadow
  * under each cutout so it does not read as pasted on. The columns
  * align across, not just down. The surface stays plain white; the bikes are the
@@ -54,6 +64,120 @@ const bezier = (x1, y1, x2, y2) => {
 }
 
 const ease = bezier(0.32, 0.72, 0, 1)
+
+/**
+ * One model, as it appears anywhere in this section. Both bands render this —
+ * the hero row and the rail — because the card is the same object in both; only
+ * the column it sits in and the type size change. Two copies of this markup was
+ * the alternative, and the two would have drifted the first time one was edited.
+ *
+ * `featured` scales the name rather than decorating the card. In the top row the
+ * column is half the width of the section instead of a third, so a name set at
+ * the rail's size would look small in it — the type follows the column.
+ *
+ * `eager` is passed rather than inferred from an index: the first bike on the
+ * page is the one worth fetching immediately, and after the split that is the
+ * first hero, not the first bike in the catalogue.
+ */
+function BikeCard({ bike, eager = false, featured = false, className }) {
+  return (
+    // Columns land left to right rather than all at once — the stagger comes
+    // from the group, so document order is the only thing setting it.
+    <article data-reveal="32" className={cn('group flex flex-col', className)}>
+      {/* Name over class, both centred. The class sat hard right for a while
+          and at this column width it drifted closer to the next bike's name
+          than to its own. No rule and no badge here — the spacing does the
+          separating. */}
+      <div className="flex flex-col items-center gap-2.5 pb-4 text-center">
+        <h3
+          className={cn(
+            'font-display font-bold tracking-[0.02em] text-ink-900',
+            featured
+              ? 'text-[1.75rem] sm:text-[2.125rem] lg:text-[2.5rem]'
+              : 'text-2xl sm:text-[1.75rem]',
+          )}
+        >
+          {bike.name}
+        </h3>
+        <span className="text-[11px] font-semibold tracking-[0.18em] uppercase text-ink-500">
+          {bike.class}
+        </span>
+      </div>
+
+      {/* Fixed aspect so bikes of different lengths still share a baseline and
+          the row never goes ragged. The photograph is taken out of flow below:
+          `aspect-ratio` only sets a preferred height, so an in-flow image
+          taller than the ratio stretches its own box and drops that column out
+          of alignment with the ones beside it — and lazy neighbours would do it
+          on load. */}
+      <div className={cn('relative w-full aspect-4/3', featured ? 'mt-8 sm:mt-10' : 'mt-10')}>
+        {/* Cast shadow. Without it the cutout floats — and it is tinted with
+            the ink hue rather than pure black. */}
+        <div
+          aria-hidden="true"
+          className={cn(
+            'absolute bottom-[8%] left-1/2 h-5 w-[70%] -translate-x-1/2 rounded-[50%]',
+            'bg-ink-900/15 blur-xl',
+            'transition-[transform,opacity] duration-500',
+            EASE,
+            'group-hover:scale-x-105 group-hover:opacity-70',
+          )}
+        />
+        <img
+          src={bike.studio}
+          // The tagline is the description when there is one; a bike still
+          // waiting on its copy gets its class instead, rather than an alt
+          // ending in an em dash and nothing.
+          alt={bike.tagline ? `${bike.name} — ${bike.tagline}` : `${bike.name}, ${bike.class}`}
+          loading={eager ? 'eager' : 'lazy'}
+          className={cn(
+            'absolute inset-0 size-full object-contain',
+            'transition-transform duration-500',
+            EASE,
+            // Lifts off its shadow rather than just scaling up.
+            'group-hover:-translate-y-2',
+          )}
+        />
+      </div>
+
+      {/* Opens the model's own page. This was an inert <span> for a while — it
+          had been a link, was stood down when the detail route was not ready,
+          and kept its underline and its hover the whole time. A thing that is
+          underlined, animates on hover and reads "Configure ›" is a link as far
+          as anybody looking at it is concerned, so the honest options were to
+          make it navigate or to stop drawing it like that. It navigates.
+
+          The card is not itself a link, so there is nothing to nest inside
+          here. `stopPropagation` is not needed for the same reason.
+
+          Its own focus ring, now that it takes a tab stop again: the hover
+          state is a `group-hover` driven by the card, which a keyboard never
+          triggers, so without this the control could be focused with no
+          indication of it. */}
+      <Link
+        to={`/motorcycles/${bike.slug}`}
+        className={cn(
+          'mt-8 inline-flex items-center gap-2 self-center text-xs font-semibold tracking-[0.16em] uppercase',
+          'text-ink-900 underline decoration-ink-900/25 decoration-1 underline-offset-[7px]',
+          'transition-colors duration-300',
+          EASE,
+          'group-hover:text-brand-600 group-hover:decoration-brand-600',
+          'hover:text-brand-600 hover:decoration-brand-600',
+          'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-500',
+        )}
+      >
+        {/* The model name is in the card above, but a screen reader reading the
+            links on this page hears "Configure" six times over with nothing to
+            tell them apart. */}
+        Configure
+        <span className="sr-only"> the {bike.name}</span>
+        <ChevronRight
+          className={cn('size-3 transition-transform duration-300', EASE, 'group-hover:translate-x-1')}
+        />
+      </Link>
+    </article>
+  )
+}
 
 // How many rules the indicator shows at once, regardless of how long the
 // lineup gets. Three is the number of bikes on screen above `lg`, so the
@@ -103,7 +227,11 @@ export default function FeaturedBikes() {
     geometry.current = {
       pitch,
       perView,
-      positions: Math.max(1, MOTORCYCLES.length - perView + 1),
+      // The rail carries the non-hero models only — the two heroes are in the
+      // grid above and never scroll — so this counts that list, not the whole
+      // catalogue. Counting all six here would give the indicator two positions
+      // the rail cannot reach and leave the clock walking into dead travel.
+      positions: Math.max(1, REST_MOTORCYCLES.length - perView + 1),
     }
     return geometry.current
   }, [])
@@ -471,112 +599,19 @@ export default function FeaturedBikes() {
   // update rather than touching the row.
   const cards = useMemo(
     () =>
-      MOTORCYCLES.map((bike, i) => (
-        // Columns land left to right rather than all at once — the stagger
-        // comes from the group, so document order is the only thing setting
-        // it.
-        <article
+      REST_MOTORCYCLES.map((bike) => (
+        <BikeCard
           key={bike.slug}
-          data-reveal="32"
+          bike={bike}
           className={cn(
-            'group flex w-[78vw] shrink-0 snap-center flex-col',
-            // Exactly three across above `lg`: the track's content box less
-            // its two gaps, divided by three. Sized off the container
-            // rather than the viewport so it stays true inside the page's
-            // max width, and the fourth bike is what the arrow is for.
+            'w-[78vw] shrink-0 snap-center',
+            // Exactly three across above `lg`: the track's content box less its
+            // two gaps, divided by three. Sized off the container rather than
+            // the viewport so it stays true inside the page's max width, and
+            // the fourth bike is what the drag is for.
             'sm:w-[46vw] lg:w-[calc((100%-12rem)/3)] lg:max-w-none',
           )}
-        >
-          {/* Name over class, both centred. The class sat hard right for a
-              while and at this column width it drifted closer to the next
-              bike's name than to its own. No rule and no badge here — the
-              spacing does the separating. */}
-          <div className="flex flex-col items-center gap-2.5 pb-4 text-center">
-            <h3 className="font-display text-2xl font-bold tracking-[0.02em] text-ink-900 sm:text-[1.75rem]">
-              {bike.name}
-            </h3>
-            <span className="text-[11px] font-semibold tracking-[0.18em] uppercase text-ink-500">
-              {bike.class}
-            </span>
-          </div>
-
-          {/* Fixed aspect so three bikes of different lengths still share a
-              baseline and the row never goes ragged. The photograph is
-              taken out of flow below: `aspect-ratio` only sets a preferred
-              height, so an in-flow image taller than the ratio stretches
-              its own box and drops that column out of alignment with the
-              two beside it — and lazy neighbours would do it on load. */}
-          <div className="relative mt-10 aspect-4/3 w-full">
-            {/* Cast shadow. Without it the cutout floats — and it is tinted
-                with the ink hue rather than pure black. */}
-            <div
-              aria-hidden="true"
-              className={cn(
-                'absolute bottom-[8%] left-1/2 h-5 w-[70%] -translate-x-1/2 rounded-[50%]',
-                'bg-ink-900/15 blur-xl',
-                'transition-[transform,opacity] duration-500',
-                EASE,
-                'group-hover:scale-x-105 group-hover:opacity-70',
-              )}
-            />
-            <img
-              src={bike.studio}
-              // The tagline is the description when there is one; a bike
-              // still waiting on its copy gets its class instead, rather
-              // than an alt ending in an em dash and nothing.
-              alt={bike.tagline ? `${bike.name} — ${bike.tagline}` : `${bike.name}, ${bike.class}`}
-              loading={i === 0 ? 'eager' : 'lazy'}
-              className={cn(
-                'absolute inset-0 size-full object-contain',
-                'transition-transform duration-500',
-                EASE,
-                // Lifts off its shadow rather than just scaling up.
-                'group-hover:-translate-y-2',
-              )}
-            />
-          </div>
-
-          {/* Opens the model's own page. This was an inert <span> for a while —
-              it had been a link, was stood down when the detail route was not
-              ready, and kept its underline and its hover the whole time. A
-              thing that is underlined, animates on hover and reads "Configure ›"
-              is a link as far as anybody looking at it is concerned, so the
-              honest options were to make it navigate or to stop drawing it like
-              that. It navigates.
-
-              The card is not itself a link, so there is nothing to nest inside
-              here. `stopPropagation` is not needed for the same reason.
-
-              Its own focus ring, now that it takes a tab stop again: the hover
-              state is a `group-hover` driven by the card, which a keyboard never
-              triggers, so without this the control could be focused with no
-              indication of it. */}
-          <Link
-            to={`/motorcycles/${bike.slug}`}
-            className={cn(
-              'mt-8 inline-flex items-center gap-2 self-center text-xs font-semibold tracking-[0.16em] uppercase',
-              'text-ink-900 underline decoration-ink-900/25 decoration-1 underline-offset-[7px]',
-              'transition-colors duration-300',
-              EASE,
-              'group-hover:text-brand-600 group-hover:decoration-brand-600',
-              'hover:text-brand-600 hover:decoration-brand-600',
-              'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-500',
-            )}
-          >
-            {/* The model name is in the card above, but a screen reader reading
-                the links on this page hears "Configure" six times over with
-                nothing to tell them apart. */}
-            Configure
-            <span className="sr-only"> the {bike.name}</span>
-            <ChevronRight
-              className={cn(
-                'size-3 transition-transform duration-300',
-                EASE,
-                'group-hover:translate-x-1',
-              )}
-            />
-          </Link>
-        </article>
+        />
       )),
     [],
   )
@@ -611,6 +646,27 @@ export default function FeaturedBikes() {
         >
           Choose your <span className="text-brand-500">electric machine</span>
         </h2>
+
+        {/* The heroes. Two columns from `sm` up and stacked below it — at phone
+            width two cards side by side would be narrower than one card in the
+            rail underneath, which would demote exactly the bikes this row exists
+            to promote.
+
+            Inside `Container`, unlike the rail: the rail runs to the viewport
+            edge because it scrolls and wants to look like it continues past the
+            screen, whereas this row is complete at every width and holding it to
+            the page's measure is what keeps the two bikes centred rather than
+            stretched across a wide monitor.
+
+            The gap is the rail's `lg` gap and the columns are half the row, so a
+            hero card comes out around 1.4× the width of one below it — the
+            promotion is legible without either row looking like a different
+            design. */}
+        <div className="mt-16 grid grid-cols-1 gap-16 sm:mt-20 sm:grid-cols-2 lg:gap-24">
+          {HERO_MOTORCYCLES.map((bike, i) => (
+            <BikeCard key={bike.slug} bike={bike} featured eager={i === 0} />
+          ))}
+        </div>
       </Container>
 
       {/* The rail sits outside Container so the columns can run to the viewport
@@ -683,7 +739,7 @@ export default function FeaturedBikes() {
             const i = windowStart + slot
             // A position is named for the bike that leads it, which is what a
             // reader sees on the left of the row when they land on it.
-            const bike = MOTORCYCLES[i]
+            const bike = REST_MOTORCYCLES[i]
             if (!bike) return null
 
             return (

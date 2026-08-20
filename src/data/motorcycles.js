@@ -458,16 +458,26 @@ export const MOTORCYCLES = [
     // RVX under an RV1 name.
     image: '/images/hero/hardik-rvx.webp',
     hero: heroRv1,
-    // Neon Green leads, and `studio` points at it, which is what finally takes
-    // the BlazeX photograph off this model. The lineup rail, the nav menu and
-    // the picker below now all show an RV1 — before this they showed a BlazeX
-    // under an RV1 name, and Sterling Silver was not even a colour this bike is
-    // sold in. That paint belongs to the machine in the photograph, and the
-    // BlazeX entry now carries it.
-    studio: studioRv1,
+    // MIDNIGHT BLUE LEADS, NOT NEON GREEN — and the reason is the lineup rail
+    // rather than anything about this bike. The RV1 and the RV1+ share their
+    // bodywork, their pose and their lighting, so with both entries leading on
+    // Neon Green the two cards sat side by side as what looked like the same
+    // photograph printed twice. The badge on the side panel is the only thing
+    // that differs and it is a few pixels wide at card size.
+    //
+    // Changing the paint on one of them is what separates them, and it is the
+    // RV1 that changes: green is the colour the RV1+ is shown in everywhere
+    // else on the site, so moving that one would cost more than it fixed.
+    //
+    // The colours array is reordered to match rather than left alone. `studio`
+    // leading the list is the rule the whole catalogue keeps — a reader who
+    // clicks a blue machine in the rail should land on a blue machine, not on a
+    // page that swaps the paint out from under them. Neon Green is still sold
+    // and still in the picker, one place down.
+    studio: studioRv1Blue2,
     colours: [
-      { name: 'Neon Green', swatch: ['#9bf218', '#1a1a1c'], studio: studioRv1 },
       { name: 'Midnight Blue', swatch: ['#1e57e0', '#17181b'], studio: studioRv1Blue2 },
+      { name: 'Neon Green', swatch: ['#9bf218', '#1a1a1c'], studio: studioRv1 },
       { name: 'Cosmos Red', swatch: ['#e01b24', '#17181b'], studio: studioRv1Cosmos2 },
       { name: 'Titan Red', swatch: ['#b8232f', '#4b4e54'], studio: studioRv1Titan2 },
     ],
@@ -727,6 +737,32 @@ export const MOTORCYCLES = [
 
 /** Bikes with a confirmed price, for anything that quotes or ranks by money. */
 export const PRICED_MOTORCYCLES = MOTORCYCLES.filter((bike) => bike.priceNpr != null)
+
+/**
+ * The two machines the showroom leads on. Held as slugs rather than as a
+ * position in `MOTORCYCLES` for the same reason `FLAGSHIP` is: that array is
+ * ordered for the catalogue and gets reshuffled, and a lineup that decides which
+ * bikes are its heroes by index would quietly promote whichever ones happened to
+ * move to the front.
+ *
+ * `FLAGSHIP` is a different question and deliberately not derived from this —
+ * that one is "which bike do the home page's figures come from", and it is the
+ * RV400 because the RV400 is the model with a complete spec sheet. This is
+ * "which bikes does the lineup put on top", which is a commercial decision.
+ */
+const HERO_SLUGS = ['rvx', 'blazex']
+
+/** The heroes, in the order named above rather than in catalogue order. */
+export const HERO_MOTORCYCLES = HERO_SLUGS.map((slug) =>
+  MOTORCYCLES.find((bike) => bike.slug === slug),
+).filter(Boolean)
+
+/**
+ * Everything else, in catalogue order. Derived by subtraction rather than listed
+ * out, so a model added to `MOTORCYCLES` appears in the lineup without anybody
+ * having to remember this line exists.
+ */
+export const REST_MOTORCYCLES = MOTORCYCLES.filter((bike) => !HERO_SLUGS.includes(bike.slug))
 
 /**
  * The bike the home page's running-cost, charging, ride-mode and FAQ folds
