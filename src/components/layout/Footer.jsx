@@ -197,7 +197,16 @@ export default function Footer() {
             links: the whole cell is the target, which on a phone is the
             difference between a 20px word and a 64px band. */}
         <nav aria-label="Footer" data-reveal className="border-b border-white/10">
-          <ul className="grid sm:grid-cols-2 md:grid-cols-5">
+          {/* Six across only from xl.
+              
+              The row went to six the moment Leadership was added, and six equal
+              cells is a width problem before it is a design one: the longest
+              label is "Motorcycles" and the widest cell at lg is about 160px
+              once the index and the padding are taken out, so "05 Leadership"
+              ran into its own divider. Three across holds the whole middle band
+              instead — one clean row of three, then a second — and the six-wide
+              line only appears where six labels genuinely fit. */}
+          <ul className="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
             {NAV_LINKS.map((link, index) => (
               <li
                 key={link.to}
@@ -209,6 +218,12 @@ export default function Footer() {
                   'border-b border-white/10 last:border-b-0 md:border-b-0',
                   'sm:even:border-l sm:even:border-white/10',
                   'md:border-l md:border-white/10 md:first:border-l-0',
+                  // The cell that opens a row has no rule on its left. At three
+                  // across that is every fourth one, and without this the second
+                  // row starts with a hairline hanging off the container edge.
+                  'md:max-xl:[&:nth-child(3n+1)]:border-l-0',
+                  // Two rows at md and lg, so the first row needs a floor.
+                  'md:max-xl:[&:nth-child(-n+3)]:border-b md:max-xl:[&:nth-child(-n+3)]:border-white/10',
                 )}
               >
                 <Link
@@ -221,10 +236,13 @@ export default function Footer() {
                     // being indented away from the container edge.
                     // Scoped to the two-column band only — left unbounded it
                     // would keep stripping the padding from cells 3 and 5 once
-                    // the row goes to five across.
+                    // the row widens.
                     'sm:px-5 sm:max-md:group-odd/cell:pl-0',
-                    'md:px-5 md:group-first/cell:pl-0',
-                    'lg:px-6 lg:group-first/cell:pl-0',
+                    // Every third cell starts a row in the middle band, so that
+                    // is the one whose padding drops — the same rule the two-
+                    // column band above applies to the odd cells.
+                    'md:px-5 md:max-xl:group-[&:nth-child(3n+1)]/cell:pl-0',
+                    'lg:px-6',
                     'xl:px-7 xl:group-first/cell:pl-0',
                     'transition-colors duration-300',
                     EASE,

@@ -12,7 +12,7 @@ import revoltLogo from '@/assets/images/new-logo-1.png'
 // footer — they are just not top-level bar items, and Contact already has the
 // button on the right. Labels and order both come from NAV_LINKS, so the bar and
 // the footer cannot drift and Blog lands where the footer already puts it.
-const HEADER_PATHS = ['/', '/motorcycles', '/blog', '/about']
+const HEADER_PATHS = ['/', '/motorcycles', '/blog', '/about', '/leadership']
 
 const navItems = NAV_LINKS.filter((link) => HEADER_PATHS.includes(link.to)).map((link) => ({
   label: link.label,

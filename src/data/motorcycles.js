@@ -163,6 +163,15 @@ export const MOTORCYCLES = [
     // claim in it is about character, which the photograph is making anyway.
     tagline: 'The sharpest machine we make.',
     pitch: 'Sharpened for Speed. Built for the Hills.',
+    // The line the model page sets at display size, and the only copy on the
+    // site written to a length rather than to a thought: six words at most, one
+    // sentence, one full stop — which the page prints in red. Anything longer
+    // wraps to two lines and stops being a punch.
+    //
+    // Kept separate from `tagline`, which is the sentence the lineup rail and
+    // the menu use and is allowed to explain itself. A model with no `punch`
+    // falls back to the tagline and simply wraps. See [[DetailSpecs]].
+    punch: 'Sharpened for the hills.',
     priceNpr: null,
     image: '/images/hero/rvx.webp',
     // PLACEHOLDER FRAME, assigned deliberately. The machine in this photograph
@@ -255,6 +264,7 @@ export const MOTORCYCLES = [
     name: 'RV400',
     class: 'Sport',
     tagline: 'The flagship. Full-size, full-torque, fully electric.',
+    punch: 'Full-size, fully electric.',
     priceNpr: 549000,
     image: '/images/hero/rv400brz.webp',
     studio: studioRv400,
@@ -364,6 +374,7 @@ export const MOTORCYCLES = [
     name: 'RV400 BRZ',
     class: 'City',
     tagline: 'Same platform, sharper city focus.',
+    punch: 'Sharper in the city.',
     priceNpr: 489000,
     // STILL AN RVX FRAME, and still wrong. `image` is the action shot for
     // full-bleed use away from this model's own page; `hero` below now overrides
@@ -452,6 +463,7 @@ export const MOTORCYCLES = [
     name: 'RV1',
     class: 'Commuter',
     tagline: 'Entry-level electric that still gets out of its own way.',
+    punch: 'Quick where it counts.',
     priceNpr: 299000,
     // ANOTHER MODEL'S PHOTOGRAPH, like the BRZ's was. `hero` below overrides it
     // on this model's own page; anything else reaching for `image` is showing an
@@ -566,6 +578,7 @@ export const MOTORCYCLES = [
     // fold is where a number earns its place. The rhythm deliberately answers
     // the RV400's "Full-size, full-torque".
     tagline: 'Commuter shape. Flagship torque.',
+    punch: 'Commuter shape, flagship torque.',
     priceNpr: null,
     image: '/images/hero/rv400brz.webp',
     studio: studioBlazeX,
@@ -655,6 +668,7 @@ export const MOTORCYCLES = [
     // range that follows from it. Naming the sibling is the shortest way to say
     // that, and it is accurate rather than a comparison invented for effect.
     tagline: 'The RV1, with the range to leave town.',
+    punch: 'The range to leave town.',
     priceNpr: null,
     image: '/images/hero/hardik-rvx.webp',
     // BRIGHT, WHERE THE HERO WANTS DARK. The other two frames on this list are a

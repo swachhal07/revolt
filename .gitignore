@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 
+# Local environment. Hygiene rather than secrecy — Vite inlines every VITE_*
+# variable into the bundle at build time, so nothing in here is actually hidden
+# once the site is built. Keeping it out of the repo stops one machine's config
+# (and the soft gate passwords) becoming everyone's default.
+.env
+.env.*
+!.env.example
+
 # Local caches written by the design tooling. Machine-specific and rewritten on
 # every run, so they only ever show up as noise in a diff.
 .hallmark/

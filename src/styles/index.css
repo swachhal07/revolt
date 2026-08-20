@@ -81,6 +81,27 @@
      spends — 400 for metadata, 800 for the numerals. */
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
+  /* ── The admin's substrate ────────────────────────────────────────────────
+     Unbleached documentation paper, three steps. Not the same warm off-white as
+     `chalk-100`: that one is an ink colour, mixed to sit *on* near-black, and a
+     full screen of it is too light and too clean to read as stock. These are
+     matte, slightly grey, and the tool is built on them — 100 is the sheet, 200
+     is a recessed zone (table headers, footers), 300 is a filled control. */
+  --color-news-100: #f4f4f0;
+  --color-news-200: #eae8e3;
+  --color-news-300: #dcd8d1;
+
+  /* Macro typography for the admin, and the only place the site uses a third
+     family. Archivo Black is a single-weight heavy grotesque: flat-sided, tight
+     countered, and it forms solid blocks at the sizes this design sets headings
+     at. Plus Jakarta Sans at 800 is a humanist face — round where this needs
+     square — and Chakra Petch would make the back office look like the launch
+     gate, which is the one thing it must not do.
+
+     Never set a weight against it: 400 is all there is to load, and asking for
+     800 gets a browser-synthesised smear. */
+  --font-macro: "Archivo Black", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
   /* The only continuous animation on the site. Everything else is either a
      one-shot entrance or a hover state. */
   --animate-marquee: marquee 38s linear infinite;
@@ -212,6 +233,88 @@
       transition-duration: 0.01ms !important;
     }
   }
+}
+
+/* ── The admin's two textures ───────────────────────────────────────────────
+   Both exist to keep a screen built from flat fills and hairlines from reading
+   as vector-perfect. A printed manual has tooth; a CSS rectangle does not.
+
+   Halftone is a dot matrix on the paper. Sub-pixel dots on purpose (0.5px in a
+   4px cell): at a full pixel it stops being tooth and becomes a visible polka
+   pattern that fights every line of type set over it. The alpha is low for the
+   same reason — at 0.2 the grid was legible as a grid, which reads as a screen
+   texture rather than as stock. */
+@utility halftone {
+  background-image: radial-gradient(rgba(5, 5, 5, 0.09) 0.5px, transparent 0.6px);
+  background-size: 4px 4px;
+}
+
+/* The hazard stripe. Used as a rule, never as a fill behind content — at any
+   height above a few pixels it is unreadable to put type on, which is exactly
+   what it is for: marking an edge that matters rather than decorating a band. */
+@utility hazard {
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--color-brand-600) 0 6px,
+    transparent 6px 12px
+  );
+}
+
+/* ── The network map's city labels ──────────────────────────────────────────
+   Leaflet draws a tooltip as a white box with a border and a pointer arrow, in
+   its own font. That is a UI affordance, and these are not affordances — they
+   are the map's typography, permanent, and they have to read as the site's.
+   So: a black chip, paper type, the same tracked micro-caps every label on the
+   site is set in, and no arrow.
+
+   Scoped to `.network-pin-label`, which [[NetworkMap]] passes as the tooltip's
+   className — the office map's own popups are Google's and are untouched. */
+.leaflet-tooltip.network-pin-label {
+  background: var(--color-ink-900);
+  border: 0;
+  border-radius: 0;
+  box-shadow: 0 8px 20px -12px rgba(5, 5, 5, 0.6);
+  color: var(--color-news-100);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  padding: 5px 8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* The pointer. Leaflet draws it as a bordered triangle on a pseudo-element; the
+   chip has no border to point out of, so it is removed rather than recoloured. */
+.leaflet-tooltip.network-pin-label::before {
+  display: none;
+}
+
+/* Stood down by the declutter pass because something else got there first.
+   `display: none` rather than `opacity: 0`, so the hidden chip stops taking
+   part in the next pass's measurements — a transparent rectangle still
+   collides, and half the map would end up reserving space for labels nobody
+   can see. */
+.leaflet-tooltip.network-pin-label.is-crowded {
+  display: none;
+}
+
+/* Brought back by a hover, and over the chip that displaced it. */
+.leaflet-tooltip.network-pin-label.is-raised {
+  z-index: 1000;
+}
+
+/* A sales point's chip, which only appears on hover. Outlined rather than
+   filled, and a step smaller: it is the same object one rank down, and it
+   arrives over a map already carrying fifteen solid chips it must not compete
+   with. */
+.leaflet-tooltip.network-pin-label--point {
+  background: var(--color-news-100);
+  box-shadow: 0 6px 16px -10px rgba(5, 5, 5, 0.5);
+  color: var(--color-ink-900);
+  font-size: 9px;
+  outline: 1px solid var(--color-ink-900);
+  padding: 4px 7px;
 }
 
 /* CRT sweep for the launch gate. A 3px period, because a 2px one moirés against

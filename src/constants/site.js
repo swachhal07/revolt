@@ -11,9 +11,17 @@ export const SITE = {
 
 export const NAV_LINKS = [
   { label: 'Home', to: '/' },
-  { label: 'Motorcycles', to: '/motorcycles' },
+  // "Vehicles", not "Motorcycles". The label is the longest in the bar and in
+  // the footer index, and with Leadership added it was the one crowding its
+  // divider — six cells cannot carry an eleven-character word. The path is
+  // untouched: `/motorcycles` is the URL, the data and the page, and only the
+  // word on the bar changed.
+  { label: 'Vehicles', to: '/motorcycles' },
   { label: 'Blog', to: '/blog' },
   { label: 'About', to: '/about' },
+  // Sits next to About because it answers the follow-up question that page
+  // raises: the operation is described there, and named here.
+  { label: 'Leadership', to: '/leadership' },
   { label: 'Contact', to: '/contact' },
 ]
 

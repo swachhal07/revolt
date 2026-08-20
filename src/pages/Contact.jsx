@@ -1,12 +1,12 @@
-import { Link } from 'react-router-dom'
 import Container from '@/components/ui/Container'
 import ContactForm from '@/components/contact/ContactForm'
 import { DeskStatus } from '@/components/contact/DirectLines'
 import OfficeMap from '@/components/contact/OfficeMap'
-import { ArrowUpRight } from '@/components/ui/icons'
+import NetworkMap from '@/components/contact/NetworkMap'
 import { useMounted } from '@/hooks/useReveal'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { CONTACT } from '@/constants/site'
+import { BRANCHES, BRANCH_COUNT, POINT_COUNT, SALES_POINTS } from '@/data/network'
 import { cn } from '@/utils/cn'
 
 /**
@@ -19,7 +19,7 @@ import { cn } from '@/utils/cn'
  * closing pitch. The form is the subject and it starts within a screen of the
  * top on a laptop.
  *
- * Three parts, in the order a visitor needs them.
+ * Four parts, in the order a visitor needs them.
  *
  *   1. The masthead: one centred headline and the desk stated in three ruled
  *      cells under it — status, hours, turnaround. No standfirst; the three
@@ -28,9 +28,14 @@ import { cn } from '@/utils/cn'
  *   2. The working area: one rectangle, half black slab and half paper. The
  *      slab is the counter — what happens to what you hand over, and the number
  *      to call if the answer cannot wait. The paper half is the form.
- *   3. The office, last. The address, the hours, the two ways to ask, and a map
- *      of where to turn up. It belongs after the form, not before it — offered
+ *   3. The office. The address, the hours, the two ways to ask, and a map of
+ *      where to turn up. It belongs after the form, not before it — offered
  *      first it is an exit, offered last it is a fallback.
+ *   4. The network, last. The group's auto division plotted on one map — every
+ *      branch and sales point — with the ruled index under it. The office
+ *      answers "where do I turn up"; this answers "where else are you", which
+ *      is a question about the set and only a map with more than one pin on it
+ *      can answer. See [[NetworkMap]] and `data/network.js`.
  *
  * Ruled, not boxed, and the working area is where that finally holds: the form's
  * controls are hairlines rather than grey wells, so the page has one language
@@ -88,6 +93,7 @@ export default function Contact() {
   // is already typing into.
   const railRef = useScrollReveal({ y: 16, duration: 0.7 })
   const linesRef = useScrollReveal({ y: 16, duration: 0.7, stagger: 0.08 })
+  const networkRef = useScrollReveal({ y: 16, duration: 0.7, stagger: 0.08 })
 
   // Spread onto the element. The delay is inline rather than a `delay-*` class
   // because it is a value, not a token — and it drops to zero on the way out so
@@ -413,6 +419,210 @@ export default function Contact() {
           </dl>
         </Container>
       </section>
+
+      {/* ── The network ───────────────────────────────────────────────────
+          The head office answers "where do I turn up". This answers the
+          question after it, which is a different question and belongs to the
+          set rather than to one address: where else are you, and how far is the
+          nearest one from me.
+
+          It sits below the office band and not above it because the office is
+          the answer for most people who reach the foot of this page — they are
+          in the valley, and the map they need is the one with the door on it.
+          The network is for everybody else, and it is worth the scroll.
+
+          Tinted, so the two maps are not two white plates in a row: the band's
+          own ground is what separates them, in the same way the working area
+          separates the form from the masthead. */}
+      <section
+        ref={networkRef}
+        className="border-t border-ink-900/[0.07] bg-ink-50 py-16 sm:py-20 lg:py-24"
+      >
+        <Container className="max-w-[100rem]">
+          <div data-reveal className="text-center">
+            <div className="flex items-center gap-5">
+              <span aria-hidden="true" className="h-px flex-1 bg-ink-900/12" />
+              <p className="shrink-0 text-[11px] font-semibold tracking-[0.2em] text-brand-600 uppercase">
+                Our network
+              </p>
+              <span aria-hidden="true" className="h-px flex-1 bg-ink-900/12" />
+            </div>
+
+            {/* The head office heading, exactly: same scale, same measure, the
+                red on one word and the full stop left black.
+
+                It was set a size down on the argument that two masthead-scale
+                headings in consecutive bands is two closings. It is not — they
+                are two halves of one answer to "where are you", and setting the
+                second smaller made the network read as a footnote to the office
+                rather than as the larger half of the same fact.
+
+                The standfirst went with it. The office heading has none, and
+                the two counts it carried are already stated as the map's own
+                legend directly underneath — a sentence saying fifteen and ten
+                above a legend saying fifteen and ten is the page reading itself
+                out twice.
+
+                The measure is the sentence's own length rather than the office
+                heading's 18ch. That one is written to break — "Come in and take
+                a / look." is two lines by design — and this one is written to
+                land in a single pass. Held at 30ch so it still has a ceiling on
+                a very wide screen, and `text-balance` so the phone, where one
+                line is not on offer, breaks it evenly instead of leaving one
+                word alone on the second. */}
+            <h2 className="mx-auto mt-8 max-w-[30ch] font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-[0.95] font-extrabold tracking-[-0.04em] text-ink-900 text-balance sm:mt-9">
+              On the ground, across <span className="text-brand-600">Nepal</span>.
+            </h2>
+          </div>
+        </Container>
+
+        {/* Outside the Container, like the office map: a map is read by area,
+            and every column of margin beside it is a road nobody can see. */}
+        <div data-reveal className="mt-12 w-full px-4 sm:mt-14 sm:px-6 lg:px-8">
+          <NetworkMap />
+        </div>
+
+        <Container className="max-w-[100rem]">
+          {/* ── The index ─────────────────────────────────────────────────
+              Two lists, not one nested one.
+
+              The first draft indented each branch's sales points inside the
+              branch's own row, on the argument that the reporting line was
+              worth drawing. It was — and it cost more than it bought: rows of
+              wildly unequal height, an address column carrying three addresses
+              at two sizes, and Butwal three times the depth of Surkhet for no
+              reason a reader could see. A directory is scanned down one column
+              at a time, and that only works if every row is the same shape.
+
+              So the distinction is stated once by a heading instead of
+              twenty-five times by indentation, and each list is uniform. The
+              sales points keep their branch, named on the row — which is the
+              one fact the nesting was actually carrying. */}
+          <div data-reveal className="mt-12 sm:mt-14">
+            <div className="flex items-center gap-5">
+              <p className={cn(LABEL, 'shrink-0 text-ink-900')}>Branches</p>
+              <span aria-hidden="true" className="h-px flex-1 bg-ink-900/12" />
+              <p className={cn(LABEL, 'shrink-0 tabular-nums')}>
+                {String(BRANCH_COUNT).padStart(2, '0')}
+              </p>
+            </div>
+
+            <ul className="mt-6 border-b border-ink-900/12">
+              {BRANCHES.map((branch, index) => (
+                <NetworkRow
+                  key={branch.id}
+                  index={index}
+                  name={branch.name}
+                  address={branch.address}
+                  manager={branch.manager}
+                  phone={branch.phone}
+                />
+              ))}
+            </ul>
+          </div>
+
+          {/* The smaller counters, in the same grid one weight down. They are
+              the same kind of row — a place, an address, a number — so they get
+              the same row; what changes is the name's weight and the line that
+              says which branch stands behind it. */}
+          <div data-reveal className="mt-14 sm:mt-16">
+            <div className="flex items-center gap-5">
+              <p className={cn(LABEL, 'shrink-0 text-ink-900')}>Sales points</p>
+              <span aria-hidden="true" className="h-px flex-1 bg-ink-900/12" />
+              <p className={cn(LABEL, 'shrink-0 tabular-nums')}>
+                {String(POINT_COUNT).padStart(2, '0')}
+              </p>
+            </div>
+
+            <ul className="mt-6 border-b border-ink-900/12">
+              {SALES_POINTS.map((point, index) => (
+                <NetworkRow
+                  key={point.id}
+                  index={index}
+                  name={point.name}
+                  under={point.branch}
+                  address={point.address}
+                  manager={point.manager}
+                  phone={point.phone}
+                  quiet
+                />
+              ))}
+            </ul>
+          </div>
+        </Container>
+      </section>
     </>
+  )
+}
+
+/**
+ * One location in the network index.
+ *
+ * Both lists use it, because both are the same row: a number, a place, an
+ * address, and the person who answers for it. `quiet` is the only difference —
+ * a sales point sets its name a size down and names the branch above it, which
+ * is the whole of its subordination. Two components would have been two grids,
+ * and two grids on one page never stay aligned.
+ */
+function NetworkRow({ index, name, under, address, manager, phone, quiet }) {
+  return (
+    <li className="border-t border-ink-900/12">
+      {/* Fixed tracks, not `auto`.
+
+          Every row is its own grid — they are separate `li`s, so nothing makes
+          them agree unless the template is stated in absolute terms. The last
+          column used to be `auto`, which sized it to the manager's name: a row
+          for Dhiraj Regmi resolved its columns differently from one for Abdul
+          Qudir Jeelani, and the address column started at a different place on
+          every line. A directory read down one ragged column is not a
+          directory.
+
+          So the number and the contact column are fixed, and only the two that
+          hold running text flex. `minmax(0,…)` on both, because a long
+          unbroken address would otherwise push a `1fr` track past its share. */}
+      <div className="grid items-baseline gap-x-8 gap-y-2 py-5 lg:grid-cols-[3rem_minmax(0,1fr)_minmax(0,1.6fr)_13rem] lg:py-6">
+        <span
+          aria-hidden="true"
+          className="font-display text-sm font-bold text-ink-900/25 tabular-nums"
+        >
+          {String(index + 1).padStart(2, '0')}
+        </span>
+
+        <div>
+          <h4
+            className={cn(
+              'font-display leading-[1.15] font-extrabold tracking-[-0.03em] text-ink-900',
+              quiet ? 'text-[1.0625rem] sm:text-[1.125rem]' : 'text-[1.25rem] sm:text-[1.5rem]',
+            )}
+          >
+            {name}
+          </h4>
+          {under ? <p className={cn(LABEL, 'mt-2')}>Under {under}</p> : null}
+        </div>
+
+        <p className="text-[15.5px] leading-[1.6] text-ink-500">{address}</p>
+
+        {/* The manager is named above their own number rather than beside it: a
+            network's promise is that somebody in particular picks up, and a
+            bare number does not make it. */}
+        <div className="lg:text-right">
+          <p className="font-display text-[15px] font-bold tracking-[-0.01em] text-ink-900">
+            {manager}
+          </p>
+          <a
+            href={`tel:+977${phone}`}
+            className={cn(
+              'mt-1 inline-block text-[15px] text-ink-500 tabular-nums',
+              'transition-colors duration-300',
+              EASE,
+              'hover:text-brand-600',
+              'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-500',
+            )}
+          >
+            {phone}
+          </a>
+        </div>
+      </div>
+    </li>
   )
 }

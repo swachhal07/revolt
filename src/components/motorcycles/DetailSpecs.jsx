@@ -35,13 +35,22 @@ const EASE = 'ease-[cubic-bezier(0.32,0.72,0,1)]'
  * a hard left edge to start from. Centring the whole fold would have made the
  * figures decorative.
  *
- * THE ACCENT SITS ON THE LAST CLAUSE. Most of this copy is written as a pair —
- * what the machine is, then what that gets you — and the second half is the
- * half that sells. Red carries it rather than a weight change or an italic: the
- * face is already at 600 and heavier closes the counters up, and an italicised
- * word in an otherwise upright headline is the oldest tell there is. What
- * counts as the last clause is `splitHeadline`'s problem; a headline with no
- * internal break takes the accent whole.
+ * ONE LINE, AND THE ONLY RED IS THE FULL STOP. The headline is `bike.punch` —
+ * six words at most, one sentence — set bold and as large as the measure
+ * allows, with its final mark in brand red.
+ *
+ * Two drafts got here. The first set the whole pitch and broke it onto two
+ * lines with the second clause in red, which at that length is not emphasis but
+ * a second text colour. The second kept the two lines and moved the red onto
+ * the single word the sentence hinged on, chosen in the data — better, and
+ * still a paragraph pretending to be a headline.
+ *
+ * What a model page actually needs here is one statement short enough to take
+ * in without moving your eyes, because nobody reads this fold; they scan it and
+ * go to the figures. So the copy got shorter rather than the typography getting
+ * cleverer, and the colour moved to the one place it can always be honest: the
+ * end of the line. Every punch has exactly one full stop, so no writer has to
+ * decide which of four words is the hinge, and no regex has to guess.
  *
  * NOTHING HERE IS REQUIRED. A model can reach this page with no tagline, no
  * figures and one colourway, and every block below tests for its own data
@@ -73,6 +82,23 @@ const HEADLINE_SPECS = [
 const HEADLINE_COUNT = 3
 
 /**
+ * Split the punch off its full stop, so the stop can be set in red.
+ *
+ * Returns the sentence and its final mark. A line ending in anything else — or
+ * in nothing — comes back whole with an empty mark, and the render simply has
+ * no red in it.
+ *
+ * This is the only place colour touches the headline now. It marks where the
+ * line *ends* rather than which word matters, which is a claim the design can
+ * always make honestly: every punch line has exactly one full stop, and no
+ * writer has to decide which of four words is the hinge.
+ */
+export function punchParts(line) {
+  const match = line.trim().match(/^(.*?)([.!?])$/)
+  return match ? [match[1], match[2]] : [line.trim(), '']
+}
+
+/**
  * Which of a model's figures this fold sets at display size.
  *
  * Exported because the marquee under this section carries the remainder, and
@@ -81,59 +107,6 @@ const HEADLINE_COUNT = 3
  * both — the alternative is two components agreeing by coincidence until one of
  * them is edited.
  */
-/**
- * Break a headline into the lines this fold sets it on. The last one returned
- * is the one that carries the accent.
- *
- * Sentence first, which is what the copy is usually written as: "Sharpened for
- * Speed. Built for the Hills." is a pair, and left to wrap on its own it set as
- * three lines with the full stop stranded mid-line, so two deliberately
- * balanced halves read as one run-on.
- *
- * A comma second, for the taglines that are one sentence in two clauses —
- * "Same platform, sharper city focus." The clause after the comma is the payoff
- * in every one of them, which is exactly what the accent is for. Only when the
- * sentence split found nothing, or "The flagship. Full-size, full-torque, fully
- * electric." would come apart into four.
- *
- * A conjunction third, for the ones punctuated as a single unbroken run:
- * "Entry-level electric that still gets out of its own way." Setting all of
- * that in the accent is a wall of red — the whole headline shouting is the same
- * as none of it shouting — so the break goes where the sentence already turns,
- * at the word that hinges it. What is left is a subject and then a claim about
- * it, which is the shape the other five have by punctuation.
- *
- * And nothing, for a headline with no break of any kind. It returns whole; a
- * three-word tagline has no half to prefer and does not need one.
- *
- * Split here rather than stored pre-broken in the data: the copy is a sentence
- * a writer types, and asking for it as an array would make every future edit a
- * layout decision as well as a wording one. Each part still wraps normally if
- * it is too long for the measure; this sets where the breaks start, not a
- * promise about how many there will be.
- */
-
-// The hinges, in the order a sentence is likeliest to turn on. Matched with
-// surrounding whitespace so "that" does not fire inside "thatch", and the
-// connective travels with the second half — it belongs to the claim it
-// introduces, not to the subject it follows.
-const HINGE = /\s(that|which|with|and|but|so|yet|because)\s/i
-
-export function splitHeadline(headline) {
-  if (!headline) return []
-
-  const sentences = headline.match(/[^.!?]+[.!?]*\s*/g) ?? [headline]
-  if (sentences.length > 1) return sentences
-
-  const comma = headline.lastIndexOf(',')
-  if (comma !== -1) return [headline.slice(0, comma + 1), headline.slice(comma + 1)]
-
-  const hinge = headline.match(HINGE)
-  if (hinge) return [headline.slice(0, hinge.index), headline.slice(hinge.index)]
-
-  return [headline]
-}
-
 export function headlineSpecKeys(bike) {
   return HEADLINE_SPECS.filter(({ key }) => bike.specs?.[key])
     .slice(0, HEADLINE_COUNT)
@@ -149,9 +122,12 @@ export default function DetailSpecs({ bike, id }) {
   const colours = bike.colours ?? []
   const colour = colours[active]
   const specs = headlineSpecKeys(bike).map((key) => HEADLINE_SPECS.find((s) => s.key === key))
-  const headline = bike.pitch ?? bike.tagline
+  // `punch` first: it is the line written to be set at this size. The pitch and
+  // the tagline are fallbacks for a model that has not been given one, and both
+  // are full sentences that will wrap — which is survivable, not the intent.
+  const headline = bike.punch ?? bike.pitch ?? bike.tagline
 
-  const headlineLines = splitHeadline(headline)
+  const [punch, stop] = headline ? punchParts(headline) : ['', '']
 
   // Every colourway is mounted at once and cross-faded between, rather than one
   // <img> having its `src` rewritten. Swapping the source swaps the pixels in a
@@ -212,29 +188,26 @@ export default function DetailSpecs({ bike, id }) {
         {hasType ? (
           <div className="mx-auto max-w-[76rem] text-center">
             {headline ? (
-              // Semibold, not bold. At this size the heavier weight closes the
-              // counters up and the lines read as a slab; 600 keeps the scale
-              // without the density. `anywhere` because a word long enough to
-              // be unbreakable would otherwise push the page wider than the
-              // phone it is being read on.
-              <h2 className="font-display text-[clamp(2rem,4.4vw,3.5rem)] leading-[1.08] font-semibold tracking-[-0.03em] text-ink-900 [overflow-wrap:anywhere]">
-                {headlineLines.map((line, i) => (
-                  <span
-                    key={line}
-                    className={cn(
-                      'block',
-                      // The last part in the accent, whatever `splitHeadline`
-                      // decided the parts were. Where a headline has an
-                      // internal break that is its second half; where it has
-                      // none — "Entry-level electric that still gets out of its
-                      // own way." — it is the whole line, because there is no
-                      // half of an unbroken sentence to prefer over the other.
-                      i === headlineLines.length - 1 ? 'text-brand-500' : null,
-                    )}
-                  >
-                    {line.trim()}
-                  </span>
-                ))}
+              // One line, bold, and as large as the measure allows.
+              //
+              // The fold used to set the whole pitch here — two clauses broken
+              // onto two lines with the second in red — and it was a paragraph
+              // pretending to be a headline. A model page is not read; it is
+              // scanned, and what carries at scanning speed is one statement
+              // short enough to take in without moving your eyes.
+              //
+              // Bold rather than the semibold this ran at before: 600 was the
+              // right weight for two long lines, where 700 closed the counters
+              // into a slab. Four words have room to be heavy.
+              //
+              // `text-balance` rather than a hard nowrap. These lines fit on
+              // one at every width the site supports, but a phone in a large
+              // accessibility text size is a width the site does not control,
+              // and a headline that overflows the viewport is worse than one
+              // that breaks in two.
+              <h2 className="font-display text-[clamp(2.25rem,5.6vw,4.5rem)] leading-[1.02] font-bold tracking-[-0.04em] text-ink-900 text-balance [overflow-wrap:anywhere]">
+                {punch}
+                {stop ? <span className="text-brand-500">{stop}</span> : null}
               </h2>
             ) : null}
 

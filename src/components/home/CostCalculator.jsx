@@ -302,8 +302,13 @@ export default function CostCalculator() {
 
           {/* The inputs, printed. Every figure in the table rests on these three
               rates and two of them move with the market. */}
-          <p data-reveal className="max-w-3xl text-xs leading-relaxed text-white/50">
-            <span className="font-semibold text-white/70">Assumptions.</span>{' '}
+          {/* One ink for the whole note. The body used to sit a step below the
+              "Assumptions." label at white/50, which at 12px on black is close
+              to unreadable — and the label is already distinguished by weight,
+              so the tint was spending contrast to say something the bold had
+              said. */}
+          <p data-reveal className="max-w-3xl text-xs leading-relaxed text-white/70">
+            <span className="font-semibold">Assumptions.</span>{' '}
             Petrol at Rs. {PETROL_PRICE} a litre against a 150cc commuter doing{' '}
             {PETROL_MILEAGE} km/l (Rs. {PETROL_PER_KM.toFixed(2)}/km), and charging
             at Rs. {UNIT_RATE} a unit for the {BIKE.name}&rsquo;s {PACK_KWH} kWh
