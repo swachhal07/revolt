@@ -36,6 +36,25 @@
   /* Deepest surface — reserved for OLED-black hero/cta sections. */
   --color-ink-950: #050505;
 
+  /* The launch gate's substrate, and the one place the site's black is warm.
+     ink-950 is a true neutral, which is right behind a photograph and wrong as
+     the whole screen: a full viewport of it reads as a panel that is switched
+     off. These two are the same black rotated a few degrees toward the brand
+     red, so the gate reads as a printed ground.
+
+     Two steps, not one, because the gate's only elevated surface (the access
+     rail) is lifted by lightness rather than by a shadow — a halo around a
+     block on near-black is the tell that this design is avoiding. */
+  --color-ink-960: oklch(14% 0.012 25);
+  --color-ink-940: oklch(19% 0.011 25);
+
+  /* Warm off-white, the ink of the gate. Pure white on a warm black reads as a
+     hole punched in the page rather than as type printed on it — the same
+     reason ink-960 exists. 400 is the secondary rank: still 8:1 on the
+     substrate, so it is quiet rather than faint. */
+  --color-chalk-100: oklch(97% 0.006 60);
+  --color-chalk-400: oklch(72% 0.008 60);
+
   /* One family across the site. Both tokens stay so call sites keep reading
      `font-display` for headings and `font-body` for prose — swapping a face
      later is a two-line change here, not a sweep through every component. */
@@ -43,7 +62,9 @@
   --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 
   /* The exception to "one family across the site", and scoped to earn it: the
-     model-name plate on a motorcycle's own page, and nothing else. Named for
+     model-name plate on a motorcycle's own page, and the countdown numerals on
+     the launch gate. Both are the same job — the largest type on a screen, where
+     Plus Jakarta Sans goes flat and wants angles. Named for
      the job rather than for the face, so replacing Chakra Petch later is a
      change here rather than a sweep through the hero. See the note in
      index.html for why the site takes a second family at all.
@@ -52,6 +73,13 @@
      never arrives the plate should look like the rest of the site rather than
      like the browser's default. */
   --font-plate: "Chakra Petch", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* The launch gate's telemetry face, and the only place a monospace is used.
+     A gate is a terminal, not a page: fixed advance width is what lets the
+     countdown digits sit in a rigid matrix and the unit labels read as machine
+     output rather than as copy. Two weights, which is exactly what the gate
+     spends — 400 for metadata, 800 for the numerals. */
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* The only continuous animation on the site. Everything else is either a
      one-shot entrance or a hover state. */
@@ -65,6 +93,56 @@
      (the charging fold). Long, because it moves the full height of a
      half-viewport panel and a fast pass over that distance reads as a flinch. */
   --animate-panel-up: panel-up 1.05s cubic-bezier(0.32, 0.72, 0, 1) both;
+
+  /* A wrong answer on the launch gate's access key. Short, small and damped —
+     it is a "no", not an alarm, and the input keeps focus through it so the
+     visitor can retype without reaching for the mouse. */
+  --animate-shake: shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+
+  /* The one live indicator on the gate. `steps(1, end)` on purpose: a hardware
+     status lamp is on or off, and easing it would make it a pulse. */
+  --animate-blink: blink 1.06s steps(1, end) infinite;
+
+  /* The launch gate's single entrance: the accent block behind one word of the
+     headline, printing itself left to right. `both` so it holds at scaleX(0)
+     through its delay rather than flashing at full width on first paint, and
+     long enough to read as a press pulling through rather than as a wipe. */
+  --animate-sweep: sweep 0.62s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@keyframes sweep {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes shake {
+  10%,
+  90% {
+    transform: translate3d(-2px, 0, 0);
+  }
+  20%,
+  80% {
+    transform: translate3d(4px, 0, 0);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-7px, 0, 0);
+  }
+  40%,
+  60% {
+    transform: translate3d(7px, 0, 0);
+  }
 }
 
 @keyframes panel-up {
@@ -134,6 +212,18 @@
       transition-duration: 0.01ms !important;
     }
   }
+}
+
+/* CRT sweep for the launch gate. A 3px period, because a 2px one moirés against
+   the device pixel ratio on a 1.5x Android panel and starts to crawl when the
+   page scrolls. Kept under 5% so it is a texture on black rather than grey
+   banding. */
+@utility scanlines {
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.045) 0 1px,
+    transparent 1px 3px
+  );
 }
 
 /* Film grain for the dark photographic bands. The hero plates are high-key

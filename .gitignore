@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Local caches written by the design tooling. Machine-specific and rewritten on
+# every run, so they only ever show up as noise in a diff.
+.hallmark/
+.impeccable/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
