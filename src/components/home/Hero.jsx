@@ -10,7 +10,7 @@ import { cn } from '@/utils/cn'
  * the bundle graph and get served directly. The stills are ~100 KB WebP; re-run
  * that step if any of them is replaced.
  *
- * FULL FRAME, WEB BITRATE. `rvx-3d.mp4` is the RVX 3D product video at its
+ * FULL FRAME, WEB BITRATE. `rvx-3d-v2.mp4` is the RVX 3D product video at its
  * native 2560x1440 / 30 fps, re-encoded from the master's 10 Mbps down to
  * 5.5 Mbps and cut from 2:12 to 2:00. 79 MB. The resolution is untouched, so
  * the crop below has the same pixels to work with as before; what went is
@@ -36,7 +36,7 @@ import { cn } from '@/utils/cn'
 const SLIDES = [
   {
     type: 'video',
-    src: '/videos/rvx-3d.mp4',
+    src: '/videos/rvx-3d-v2.mp4',
     poster: '/videos/rvx-3d-poster.jpg',
   },
   {

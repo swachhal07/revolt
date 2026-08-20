@@ -85,13 +85,39 @@ export default function DetailHero({ bike }) {
           a motorcycle pasted into the corner of it. The point of running an
           image at this size is that it is visible, so each gradient now clears
           to nothing around the midpoint and the machine sits in open picture. */}
+      {/* ALL THREE ARE DESKTOP WASHES, and below `sm` they are off.
+
+          They are aimed at a wide frame where the type sits left and the
+          machine sits right, and each one clears around the midpoint of a
+          landscape picture. On a 375px phone the frame is a portrait window: a
+          wash that dies at 56% of the width is now covering 210 pixels of a
+          375-pixel-wide motorcycle, the bottom radial takes the rest, and the
+          three of them together turn the photograph into a black panel with a
+          headlamp in it. The whole argument for running an image at this size
+          is that it can be seen.
+
+          The phone gets one wash of its own instead, below — vertical, because
+          on a stacked layout the type is at the top and the bottom and the
+          machine is in the middle, which is the opposite axis to the one these
+          are drawn on. */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-[linear-gradient(to_right,rgba(5,5,5,0.78)_0%,rgba(5,5,5,0.32)_26%,rgba(5,5,5,0)_56%)]"
+        className="absolute inset-0 hidden bg-[linear-gradient(to_right,rgba(5,5,5,0.78)_0%,rgba(5,5,5,0.32)_26%,rgba(5,5,5,0)_56%)] sm:block"
       />
       <div
         aria-hidden="true"
-        className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(to_top,rgba(5,5,5,0.72)_0%,rgba(5,5,5,0.12)_38%,rgba(5,5,5,0)_100%)]"
+        className="absolute inset-x-0 bottom-0 hidden h-1/2 bg-[linear-gradient(to_top,rgba(5,5,5,0.72)_0%,rgba(5,5,5,0.12)_38%,rgba(5,5,5,0)_100%)] sm:block"
+      />
+
+      {/* The phone's only scrim. Dark under the model name at the top, dark
+          under the price cluster at the bottom, and all but clear across the
+          middle third where the motorcycle is — so the type keeps its contrast
+          and the picture keeps the frame. 0.05 rather than 0 in the middle:
+          a pale building or a bright sky needs a touch of hold, and five per
+          cent is below the threshold at which it reads as a veil. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(5,5,5,0.6)_0%,rgba(5,5,5,0.08)_30%,rgba(5,5,5,0.05)_50%,rgba(5,5,5,0.82)_100%)] sm:hidden"
       />
 
       {/* A third wash, and the only one that is not a band across the frame.
@@ -110,30 +136,35 @@ export default function DetailHero({ bike }) {
           clears to nothing about two thirds of the way across, so the machine
           still sits in open picture.
 
-          Right-anchored, and the cluster ranges left below `sm` — but the
-          horizontal wash already owns that corner at those widths, so there is
-          nothing to add there. */}
+          Right-anchored, and `sm` and up only: below that the cluster ranges
+          left and the phone's own vertical wash already holds the whole bottom
+          edge. */}
       <div
         aria-hidden="true"
-        className="absolute inset-x-0 bottom-0 h-2/3 bg-[radial-gradient(115%_100%_at_100%_100%,rgba(5,5,5,0.7)_0%,rgba(5,5,5,0.34)_36%,rgba(5,5,5,0)_68%)]"
+        className="absolute inset-x-0 bottom-0 hidden h-2/3 bg-[radial-gradient(115%_100%_at_100%_100%,rgba(5,5,5,0.7)_0%,rgba(5,5,5,0.34)_36%,rgba(5,5,5,0)_68%)] sm:block"
       />
 
       <div
         className={cn(
           'relative mx-auto flex max-w-[1600px] flex-col justify-between gap-16 px-6 pt-16 pb-14 lg:px-10 lg:pb-20',
-          // The rest of the screen, and not a fraction of it. At 82svh the
-          // frame stopped a couple of hundred pixels short of the fold, so the
-          // first thing under the motorcycle was a band of white with nothing
-          // in it — the page appeared to end before the section below had
-          // started. The subtraction is the layout's 6rem of bar clearance, so
-          // the frame's bottom edge lands on the fold.
+          // Exactly the rest of the screen. A model page opens on its machine
+          // and on nothing else: no strip of the next section, no line of the
+          // heading below it, nothing at the bottom edge to say the frame ran
+          // out before the viewport did.
+          //
+          // The subtraction is the layout's bar clearance and has to match it
+          // to the pixel, which is why it moves at `sm` — the bar is 88px
+          // around an `h-12` logo and 96px around an `h-14` one. It was 6rem
+          // at every width, and the 8px it was out by on a phone is exactly the
+          // sliver of the band below that used to show under the frame. See
+          // [[RootLayout]], which reserves the same two numbers.
           //
           // `svh`, not `vh`: on a phone `vh` is measured against the viewport
           // with the browser chrome retracted, which leaves the hero taller
           // than the screen until the address bar slides away. `max()` floors
           // it for a short landscape window, where a full-height frame would
           // put the price cluster on top of the headline.
-          'min-h-[max(30rem,calc(100svh-6rem))]',
+          'min-h-[max(30rem,calc(100svh-5.5rem))] sm:min-h-[max(30rem,calc(100svh-6rem))]',
         )}
       >
         <div className="max-w-2xl">

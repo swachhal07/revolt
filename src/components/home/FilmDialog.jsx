@@ -27,12 +27,18 @@ import { cn } from '@/utils/cn'
  * restarts the download. Two elements pointing at one URL is one download: the
  * file is in the HTTP cache by the time anybody presses the button.
  *
- * FROM THE TOP, WITH CONTROLS AND SOUND AVAILABLE. The hero skips the twelve
- * second logo sting because a background loop should not open on a wordmark.
- * This is not a background — somebody asked to watch it — so it starts at zero,
- * carries the browser's own controls, and can be unmuted. It still *opens*
- * muted: an autoplay with sound is blocked by every current browser, and the
- * block silently fails the play rather than prompting.
+ * FROM THE TOP, WITH SOUND. The hero skips the twelve second logo sting and
+ * runs silent, because a background loop should do both. This is not a
+ * background — somebody pressed a button asking to watch it — so it starts at
+ * zero, carries the browser's own controls, and comes up with the audio on.
+ *
+ * Sound is allowed here only because of that press. Autoplay with audio is
+ * blocked everywhere unless the page has been "activated" by a user gesture,
+ * and opening this dialog is exactly that. It is still not a promise: the
+ * activation can be missing on a cold load with a stricter policy, or the
+ * device can be under a hardware mute switch, so the play is attempted unmuted and
+ * falls back to muted-and-playing rather than to not playing at all. A silent
+ * film the reader can unmute beats a black box with a blocked play behind it.
  */
 export default function FilmDialog({ open, onClose, src, poster }) {
   const dialog = useRef(null)
@@ -50,7 +56,16 @@ export default function FilmDialog({ open, onClose, src, poster }) {
       // backdrop. `stop` parks it until the dialog closes.
       getLenis()?.stop()
 
-      video.current?.play().catch(() => {})
+      // Unmuted first. If the policy refuses, the promise rejects and nothing
+      // has played yet — so mute and go again, which is always allowed.
+      const element = video.current
+      if (element) {
+        element.muted = false
+        element.play().catch(() => {
+          element.muted = true
+          element.play().catch(() => {})
+        })
+      }
     } else if (node.open) {
       node.close()
     }
@@ -126,8 +141,8 @@ export default function FilmDialog({ open, onClose, src, poster }) {
         </div>
 
         <p className="mx-auto mt-4 max-w-[52ch] text-center text-[13px] leading-relaxed text-white/45">
-          The hero crops this film to fill the screen. This is the whole frame — turn the sound on
-          with the player&rsquo;s own control.
+          The hero crops this film to fill the screen and runs it silent. This is the whole frame,
+          with sound.
         </p>
       </div>
     </dialog>

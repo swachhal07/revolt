@@ -102,10 +102,19 @@ export default function Navbar() {
         setHovered(false)
         setMenu(false)
       }}
+      // The solid bar separates by depth, not by a line. It carried both a
+      // hairline and a shadow, and over a photograph — which is most of this
+      // site, and all of it on a phone where the bar sits on the hero from the
+      // first scroll — the hairline read as a grey scar ruled across the frame
+      // rather than as an edge. The shadow already says the bar is in front.
+      //
+      // No border at all, in either state. It was a transparent one for a
+      // while, kept so the solid/transparent swap could not change the
+      // element's height — but with the visible hairline gone there is nothing
+      // to hold a place for, and 0.67px of border made the bar 88.67px tall
+      // where the layout below reserves whole pixels for it.
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-        solid
-          ? 'border-b border-ink-900/10 bg-white shadow-[0_10px_30px_-12px_rgba(18,18,20,0.25)]'
-          : 'border-b border-transparent bg-transparent'
+        solid ? 'bg-white shadow-[0_10px_30px_-12px_rgba(18,18,20,0.25)]' : 'bg-transparent'
       }`}
     >
       <nav className="relative mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-6 py-5 lg:px-10">
