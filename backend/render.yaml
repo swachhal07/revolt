@@ -10,7 +10,13 @@ services:
     runtime: node
     rootDir: backend
     plan: free
-    buildCommand: npm ci
+    # `npm run build` does not build anything — the service runs straight off its
+    # source. It is here because Render's default build command calls it, so a
+    # service created through the dashboard rather than from this blueprint fails
+    # the deploy on a missing script. What it actually does is parse every file,
+    # which is worth doing: a syntax error otherwise passes the deploy and the
+    # health check, then throws on the first request that reaches the bad module.
+    buildCommand: npm ci && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:

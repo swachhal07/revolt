@@ -120,8 +120,19 @@ afternoon in a shared office eventually locks out everyone beside them.
 `render.yaml` is a blueprint; or create a Web Service by hand with:
 
 - **Root directory** `backend`
-- **Build** `npm ci` · **Start** `npm start`
+- **Build** `npm ci && npm run build` · **Start** `npm start`
 - **Health check path** `/api/health`
+
+`npm run build` builds nothing — the service runs straight off its source. It is
+there because Render's default build command calls it, and a missing script
+fails the deploy outright. What it does is parse every file in the service, which
+is worth the second it takes: a syntax error otherwise passes both the deploy and
+the health check, then throws on the first request that reaches the broken module
+— a green deploy with a dead endpoint.
+
+Node is pinned to `22.x` in `engines`. It was `>=20`, which let Render install
+whatever the newest release happened to be — it picked 26 — and a major version
+nothing has been run against is not something a deploy should choose on its own.
 
 Set `CORS_ORIGINS` to the deployed frontend's origin, `ADMIN_PASSWORD`, and the
 three Cloudinary values. Let Render generate `JWT_SECRET`.

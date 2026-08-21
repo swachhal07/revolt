@@ -5,11 +5,12 @@
   "type": "module",
   "description": "The API behind the Revolt Nepal site and its back office.",
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "node --watch server.js",
     "start": "node server.js",
+    "build": "node scripts/check.js",
     "seed": "node scripts/seed.js"
   },
   "dependencies": {
