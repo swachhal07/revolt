@@ -100,7 +100,7 @@ export default function LaunchGate({ onUnlock }) {
           {/* The headline, demoted to a stencilled caption: it labels the readout
               rather than competing with it. Unframed — the ASCII brackets that
               used to hold it were as heavy as the words they framed. */}
-          <h1 className={cn(MICRO, 'text-center text-white')}>The Revolt arrives in</h1>
+          <h1 className={cn(MICRO, 'text-center text-white')}>New Revolt Coming soon</h1>
 
           <Clock left={left} />
         </main>
