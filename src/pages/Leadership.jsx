@@ -1,6 +1,7 @@
 import Container from '@/components/ui/Container'
 import { useMounted } from '@/hooks/useReveal'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
+import { useLeadership } from '@/hooks/useCollection'
 import { BOARD, MANAGEMENT, PRINCIPLES } from '@/data/leadership'
 import { cn } from '@/utils/cn'
 
@@ -49,6 +50,10 @@ const monogram = (name) =>
     .join('')
 
 export default function Leadership() {
+  // Read through the admin's adapter, falling back to the bundled roster. This is
+  // what makes an edit in the back office — a portrait, a title, a new desk —
+  // appear on this page instead of being written to a store nothing renders from.
+  const { board, management } = useLeadership(BOARD, MANAGEMENT)
   const mounted = useMounted()
 
   const boardRef = useScrollReveal({ y: 16, duration: 0.7, stagger: 0.08 })
@@ -134,8 +139,8 @@ export default function Leadership() {
             )}
           >
             {[
-              { term: 'Board of directors', value: String(BOARD.length).padStart(2, '0') },
-              { term: 'Management team', value: String(MANAGEMENT.length).padStart(2, '0') },
+              { term: 'Board of directors', value: String(board.length).padStart(2, '0') },
+              { term: 'Management team', value: String(management.length).padStart(2, '0') },
               { term: 'Distributor since', value: '2023' },
             ].map((row) => (
               <div key={row.term}>
@@ -163,7 +168,7 @@ export default function Leadership() {
             <p className={cn(LABEL, 'text-brand-600')}>Board of directors</p>
             <span aria-hidden="true" className="h-px flex-1 bg-ink-900/12" />
             <p className={cn(LABEL, 'hidden shrink-0 text-ink-900/35 tabular-nums sm:block')}>
-              01 — {String(BOARD.length).padStart(2, '0')}
+              01 — {String(board.length).padStart(2, '0')}
             </p>
           </div>
 
@@ -190,7 +195,7 @@ export default function Leadership() {
           </p>
 
           <ul className="mt-16 grid gap-x-6 gap-y-12 sm:mt-20 sm:grid-cols-2 lg:grid-cols-4 lg:gap-x-8">
-            {BOARD.map((person, index) => {
+            {board.map((person, index) => {
               return (
                 <li key={person.slug} id={person.slug} data-reveal className="group scroll-mt-28">
                   <Portrait person={person} />
@@ -280,7 +285,7 @@ export default function Leadership() {
             <p className={cn(LABEL, 'shrink-0 text-brand-500')}>Management team</p>
             <span aria-hidden="true" className="h-px flex-1 bg-white/15" />
             <p className={cn(LABEL, 'hidden shrink-0 text-white/30 tabular-nums sm:block')}>
-              01 — {String(MANAGEMENT.length).padStart(2, '0')}
+              01 — {String(management.length).padStart(2, '0')}
             </p>
           </div>
 
@@ -304,7 +309,7 @@ export default function Leadership() {
               under the heading instead of stretching to the full 92rem, where
               a pair reads as two billboards with a gap between them. */}
           <ul className="mx-auto mt-16 grid max-w-[64rem] gap-8 sm:mt-20 sm:grid-cols-2">
-            {MANAGEMENT.map((person, index) => (
+            {management.map((person, index) => (
               <li key={person.slug} id={person.slug} data-reveal className="group scroll-mt-28">
                 <div className="relative overflow-hidden border-t border-white/15">
                   {/* The press pass: a red rule printing left to right. */}
@@ -317,16 +322,71 @@ export default function Leadership() {
                       'group-hover:scale-x-100',
                     )}
                   />
-                  {/* Paper, pulled up from the bottom edge. */}
-                  <span
-                    aria-hidden="true"
-                    className={cn(
-                      'absolute inset-0 origin-bottom scale-y-0 bg-chalk-100',
-                      'transition-transform duration-500',
-                      EASE,
-                      'group-hover:scale-y-100',
-                    )}
-                  />
+                  {/* Paper, pulled up from the bottom edge. Only where there is
+                      no photograph: the sweep exists to give an empty panel
+                      something to do on hover, and pulling a sheet of chalk up
+                      over a portrait would just wipe the portrait off. */}
+                  {!person.photo && (
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        'absolute inset-0 origin-bottom scale-y-0 bg-chalk-100',
+                        'transition-transform duration-500',
+                        EASE,
+                        'group-hover:scale-y-100',
+                      )}
+                    />
+                  )}
+
+                  {/* The photograph, filling the panel.
+
+                      Full-bleed rather than the square chip this used to be. The
+                      board plates give a portrait the whole frame and these read
+                      as the lesser tier for having a thumbnail in the corner,
+                      which is not the distinction the page is drawing — one tier
+                      signs, the other answers the phone, and neither is junior.
+
+                      `object-top` for the same reason the board plates use it: a
+                      head-and-shoulders frame cropped to a landscape panel from
+                      the centre takes the chin off. The lift on hover is the
+                      board's `scale-[1.03]`, so a portrait behaves the same way
+                      in both tiers. */}
+                  {person.photo && (
+                    <>
+                      <img
+                        src={person.photo}
+                        alt={person.name}
+                        loading="lazy"
+                        className={cn(
+                          'absolute inset-0 h-full w-full object-cover object-top',
+                          'transition-transform duration-700',
+                          EASE,
+                          'group-hover:scale-[1.03]',
+                        )}
+                      />
+
+                      {/* The scrim, and it is doing real work rather than
+                          darkening for the sake of it: the name is set at 3rem
+                          in chalk and the role in brand red, and both sit over
+                          whatever the photograph happens to be behind them. A
+                          gradient weighted to the bottom keeps the type on a
+                          field it can hold without flattening the whole frame
+                          into grey. It deepens on hover, which is what replaces
+                          the paper sweep here. */}
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          'absolute inset-0 transition-opacity duration-500 opacity-85',
+                          EASE,
+                          'group-hover:opacity-95',
+                        )}
+                        style={{
+                          background:
+                            'linear-gradient(to top, rgba(10,10,11,0.94) 0%, rgba(10,10,11,0.72) 38%, rgba(10,10,11,0.28) 70%, rgba(10,10,11,0.12) 100%)',
+                        }}
+                      />
+                    </>
+                  )}
 
                   {/* The initial, standing behind the name. This is the
                       portrait's slot: it is what a missing photograph looks
@@ -353,28 +413,12 @@ export default function Leadership() {
                           LABEL,
                           'text-white/35 tabular-nums transition-colors duration-500',
                           EASE,
-                          'group-hover:text-ink-900/40',
+                          !person.photo && 'group-hover:text-ink-900/40',
                         )}
                       >
                         Desk {String(index + 1).padStart(2, '0')}
                       </span>
 
-                      {/* When the admin sends a portrait it lands here, at
-                          the site's square chip, and the ghost initial above
-                          stands down. */}
-                      {person.photo && (
-                        <img
-                          src={person.photo}
-                          alt={person.name}
-                          loading="lazy"
-                          className={cn(
-                            'size-16 shrink-0 object-cover object-top ring-1 ring-white/20',
-                            'transition-[box-shadow] duration-500 sm:size-20',
-                            EASE,
-                            'group-hover:ring-ink-900/15',
-                          )}
-                        />
-                      )}
                     </div>
 
                     <div className="mt-12">
@@ -383,7 +427,7 @@ export default function Leadership() {
                           'font-display text-[clamp(2.25rem,4.4vw,3.25rem)] leading-[0.98] font-extrabold tracking-[-0.045em] text-chalk-100',
                           'transition-colors duration-500',
                           EASE,
-                          'group-hover:text-ink-900',
+                          !person.photo && 'group-hover:text-ink-900',
                         )}
                       >
                         {person.name}
@@ -394,7 +438,7 @@ export default function Leadership() {
                           LABEL,
                           'mt-4 text-brand-500 transition-colors duration-500',
                           EASE,
-                          'group-hover:text-brand-600',
+                          !person.photo && 'group-hover:text-brand-600',
                         )}
                       >
                         {person.role}
@@ -406,7 +450,7 @@ export default function Leadership() {
                             'mt-5 max-w-[38ch] text-[15.5px] leading-[1.7] text-chalk-400 text-pretty',
                             'transition-colors duration-500',
                             EASE,
-                            'group-hover:text-ink-800',
+                            !person.photo && 'group-hover:text-ink-800',
                           )}
                         >
                           {person.remit}
@@ -419,7 +463,7 @@ export default function Leadership() {
                             LABEL,
                             'mt-5 text-white/30 transition-colors duration-500',
                             EASE,
-                            'group-hover:text-ink-900/40',
+                            !person.photo && 'group-hover:text-ink-900/40',
                           )}
                         >
                           In post since {person.since}
