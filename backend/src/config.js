@@ -6,22 +6,46 @@ import 'dotenv/config'
  *
  * Read here and nowhere else, so `process.env` appears in exactly one file and
  * the full set of things this service needs to run is a list you can read rather
- * than a grep. A missing secret fails the process on boot with the name of the
- * variable in the message — the alternative is a service that starts happily and
- * then throws on the first login, which is the same bug discovered an hour later
- * by somebody who cannot see the logs.
+ * than a grep. A missing secret fails the process on boot naming the variable —
+ * the alternative is a service that starts happily and then throws on the first
+ * login, which is the same bug discovered an hour later by somebody who cannot
+ * see the logs.
+ *
+ * Every missing variable is reported at once, not the first one found. Throwing
+ * on the first means a deploy that is short of four of them fails four times,
+ * and each round trip on a hosted service is a build, a boot and a wait to read
+ * the log. The list is known up front; there is no reason to hand it over one
+ * name at a time.
  */
+
+const missing = []
 
 function required(name) {
   const value = process.env[name]
 
   if (!value) {
-    throw new Error(
-      `Missing required environment variable ${name}. See backend/.env.example for the full set.`,
-    )
+    missing.push(name)
+    return ''
   }
 
   return value
+}
+
+/**
+ * Fail if anything was missing. Called once, after every `required` has run.
+ *
+ * Deliberately not a throw inside `required`: collecting is the whole point, and
+ * a throw partway through would abandon the rest of the checks.
+ */
+function assertComplete() {
+  if (missing.length === 0) return
+
+  throw new Error(
+    `Missing required environment variable${missing.length > 1 ? 's' : ''}:\n` +
+      missing.map((name) => `  ${name}`).join('\n') +
+      `\n\nSet ${missing.length > 1 ? 'them' : 'it'} in the host's environment` +
+      ` (or in backend/.env locally). See backend/.env.example for the full set.`,
+  )
 }
 
 /**
@@ -81,3 +105,7 @@ export const config = {
     folder: process.env.CLOUDINARY_FOLDER ?? 'revolt',
   },
 }
+
+// After the object is built, so every `required` above has had its turn and the
+// error names all of them rather than the first.
+assertComplete()
