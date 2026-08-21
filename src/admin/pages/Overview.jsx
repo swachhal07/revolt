@@ -192,15 +192,15 @@ function buildFaults(motorcycles, posts, leadership) {
   const items = []
 
   for (const bike of motorcycles) {
-    if (bike.priceNpr == null) {
-      items.push({
-        title: bike.name || bike.slug,
-        href: `/admin/motorcycles/${bike.slug}`,
-        note: 'No price, so it is left out of anything that ranks or quotes by money.',
-        tag: 'No price',
-        tone: 'neutral',
-      })
-    }
+    // A missing price is deliberately not listed.
+    //
+    // It used to be, on the reasoning that an unpriced model is left out of
+    // anything ranking by money. But "no price" is a state the catalogue chooses:
+    // only a figure from the MRP sheet goes in, anything else stays empty, and
+    // every surface renders that as "on request" rather than as a gap. Two models
+    // are in that state on purpose, so the rule reported them forever and neither
+    // was ever going to be actioned — and a list of things that cannot be cleared
+    // is a list people stop reading, which costs the rules that do matter.
 
     if (!bike.studio) {
       items.push({
