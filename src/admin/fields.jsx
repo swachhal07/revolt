@@ -1,18 +1,19 @@
 import { useId, useRef, useState } from 'react'
 import { cn } from '@/utils/cn'
-import { canUpload, thumbUrl, uploadImage } from './backend/media'
-import { slugify } from './backend/schema'
+import { canUpload, thumbUrl, uploadImage } from './data/media'
+import { slugify } from './data/schema'
 import {
   Action,
-  CELL,
   CONTROL_CLASS,
+  DATA,
   EDGE,
   Field,
-  MICRO,
-  SHEET,
+  Lamp,
+  LEGEND,
   Select,
   TextArea,
   TextInput,
+  VOID,
 } from './ui'
 
 /**
@@ -55,7 +56,7 @@ export function FieldControl({ field, value, onChange, error, record }) {
           type="number"
           inputMode="numeric"
           value={value ?? ''}
-          className="font-mono tabular-nums"
+          className={cn(DATA, 'text-[14px]')}
           // Empty means "no value", not zero — a model with no announced price
           // must not become a model priced at nothing.
           onChange={(event) => onChange(event.target.value === '' ? null : Number(event.target.value))}
@@ -69,7 +70,7 @@ export function FieldControl({ field, value, onChange, error, record }) {
           {...common}
           type="date"
           value={value ?? ''}
-          className="font-mono"
+          className={DATA}
           onChange={(event) => onChange(event.target.value)}
         />
       )
@@ -149,7 +150,7 @@ function SlugInput({ field, value, onChange, record, ...props }) {
         value={value ?? ''}
         placeholder="lower-case-with-hyphens"
         onChange={(event) => onChange(event.target.value)}
-        className="font-mono text-[13px] tracking-[0.04em]"
+        className={cn(DATA, 'rounded-r-none text-[13px] tracking-[0.03em]')}
       />
       {field.from && (
         // Butted against the input rather than spaced from it: two controls that
@@ -158,7 +159,7 @@ function SlugInput({ field, value, onChange, record, ...props }) {
           onClick={() => onChange(slugify(source))}
           disabled={!source}
           title={`Generate from ${field.from}`}
-          className="-ml-px"
+          className="-ml-px rounded-l-none"
         >
           Generate
         </Action>
@@ -199,15 +200,21 @@ function ImageInput({ value, onChange, ...props }) {
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-start gap-2">
-        {/* Checkerboard behind the plate: the studio cutouts are transparent PNGs,
-            and on flat paper a cutout is indistinguishable from a missing image. */}
+    <div className="flex flex-col gap-2.5">
+      <div className="flex items-start gap-2.5">
+        {/* Checkerboard behind the plate: the studio cutouts are transparent
+            PNGs, and on a flat panel a cutout is indistinguishable from a
+            missing image. Ink squares, because this field only ever renders
+            inside the worksheet — the one light surface in the tool — and the
+            cutouts are shot for white, so the check has to be what darkens. */}
         <div
-          className={cn('grid size-[4.5rem] shrink-0 place-items-center border bg-news-200', EDGE)}
+          className={cn(
+            'grid size-[4.5rem] shrink-0 place-items-center rounded-[2px] border bg-rig-900 inset-well',
+            EDGE,
+          )}
           style={{
             backgroundImage:
-              'linear-gradient(45deg, rgba(5,5,5,0.07) 25%, transparent 25% 75%, rgba(5,5,5,0.07) 75%), linear-gradient(45deg, rgba(5,5,5,0.07) 25%, transparent 25% 75%, rgba(5,5,5,0.07) 75%)',
+              'linear-gradient(45deg, rgba(0,0,0,0.06) 25%, transparent 25% 75%, rgba(0,0,0,0.06) 75%), linear-gradient(45deg, rgba(0,0,0,0.06) 25%, transparent 25% 75%, rgba(0,0,0,0.06) 75%)',
             backgroundSize: '10px 10px',
             backgroundPosition: '0 0, 5px 5px',
           }}
@@ -227,17 +234,17 @@ function ImageInput({ value, onChange, ...props }) {
               }}
             />
           ) : (
-            <span className={cn(MICRO, 'text-ink-950/30')}>Nil</span>
+            <span className={cn(LEGEND, 'text-rig-700')}>Nil</span>
           )}
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
           <TextInput
             {...props}
             value={value ?? ''}
             placeholder="https://…"
             onChange={(event) => onChange(event.target.value)}
-            className="font-mono text-[12.5px]"
+            className={cn(DATA, 'text-[12.5px]')}
           />
 
           <div className="flex flex-wrap items-center gap-1.5">
@@ -261,14 +268,14 @@ function ImageInput({ value, onChange, ...props }) {
                 Clear
               </Action>
             )}
-            {!canUpload && <span className={cn(MICRO, 'text-ink-950/40')}>URL only</span>}
+            {!canUpload && <span className={cn(LEGEND, 'text-lume-600')}>URL only</span>}
           </div>
         </div>
       </div>
 
       {failure && (
-        <p role="alert" className={cn(MICRO, 'text-brand-600')}>
-          <span aria-hidden="true">/// </span>
+        <p role="alert" className={cn(LEGEND, 'flex items-center gap-2 text-brand-400')}>
+          <Lamp alarm />
           {failure}
         </p>
       )}
@@ -287,20 +294,23 @@ function ColorPairInput({ value, onChange }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2.5">
       {pair.map((hex, index) => (
         <div key={index} className="flex">
           <input
             type="color"
             value={hex}
             onChange={(event) => set(index, event.target.value)}
-            className={cn('size-9 shrink-0 cursor-pointer border bg-news-100 p-1', EDGE)}
+            className={cn(
+              'size-9 shrink-0 cursor-pointer rounded-[2px] rounded-r-none border bg-rig-900 p-1',
+              EDGE,
+            )}
             aria-label={index === 0 ? 'Primary tone' : 'Secondary tone'}
           />
           <input
             value={hex}
             onChange={(event) => set(index, event.target.value)}
-            className={cn(CONTROL_CLASS, '-ml-px h-9 w-24 py-0 font-mono text-[12px] uppercase')}
+            className={cn(CONTROL_CLASS, DATA, '-ml-px h-9 w-24 rounded-l-none py-0 text-[12px] uppercase')}
             aria-label={index === 0 ? 'Primary tone hex' : 'Secondary tone hex'}
           />
         </div>
@@ -340,46 +350,66 @@ function PairsInput({ field, value, onChange }) {
 
   const remove = (index) => onChange(Object.fromEntries(entries.filter((_, i) => i !== index)))
 
+  // One grid definition for the header and the rows, so a retyped key cannot
+  // drift out of line with the column it is under.
+  const TRACKS = 'grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_2.25rem]'
+
   return (
-    <div className={cn('border', EDGE)}>
+    <div className={cn('overflow-hidden rounded-[2px] border', EDGE)}>
       {entries.length === 0 ? (
-        <p className={cn(MICRO, 'px-3 py-3 text-ink-950/40')}>No rows</p>
+        <p className={cn(LEGEND, 'bg-rig-900 px-3 py-3.5 text-lume-600')}>No rows</p>
       ) : (
         <>
-          <div className={cn('grid grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_2.25rem] gap-px border-b bg-news-200', EDGE)}>
-            <span className={cn(MICRO, 'px-2.5 py-2 text-ink-950/50')}>{field.keyLabel ?? 'Key'}</span>
-            <span className={cn(MICRO, 'px-2.5 py-2 text-ink-950/50')}>{field.valueLabel ?? 'Value'}</span>
+          <div className={cn('grid border-b bg-rig-900', TRACKS, EDGE)}>
+            <span className={cn(LEGEND, 'px-2.5 py-2.5 text-lume-600')}>
+              {field.keyLabel ?? 'Key'}
+            </span>
+            <span className={cn(LEGEND, 'px-2.5 py-2.5 text-lume-600')}>
+              {field.valueLabel ?? 'Value'}
+            </span>
             <span />
           </div>
 
-          <dl className={cn('grid grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_2.25rem] gap-px', SHEET)}>
+          <dl className={cn('grid gap-px', TRACKS, VOID)}>
             {entries.map(([key, val], index) => (
               // `dt`/`dd` pairs plus the remove control, laid on the same grid
               // tracks as the header. `display: contents` on a wrapper would break
               // the grid, so the three children sit directly in it.
               <div key={index} className="contents">
-                <dt className={CELL}>
+                <dt className="bg-rig-950">
                   <input
                     value={key}
                     onChange={(event) => setKey(index, event.target.value)}
                     aria-label={`${field.keyLabel ?? 'Key'} ${index + 1}`}
-                    className={cn(MICRO, 'w-full border-0 bg-transparent px-2.5 py-2.5 text-ink-950 focus:bg-white focus:outline-none')}
+                    className={cn(
+                      LEGEND,
+                      'w-full border-0 bg-transparent px-2.5 py-3 text-lume-100',
+                      'focus:bg-rig-900 focus:outline-none',
+                    )}
                   />
                 </dt>
-                <dd className={CELL}>
+                <dd className="bg-rig-950">
                   <input
                     value={val}
                     onChange={(event) => setValue(index, event.target.value)}
                     aria-label={`${field.valueLabel ?? 'Value'} ${index + 1}`}
-                    className="w-full border-0 bg-transparent px-2.5 py-2.5 font-mono text-[13px] text-ink-950 focus:bg-white focus:outline-none"
+                    className={cn(
+                      DATA,
+                      'w-full border-0 bg-transparent px-2.5 py-3 text-[13px] text-lume-100',
+                      'focus:bg-rig-900 focus:outline-none',
+                    )}
                   />
                 </dd>
-                <div className={cn(CELL, 'grid place-items-center')}>
+                <div className="grid place-items-center bg-rig-950">
                   <button
                     type="button"
                     onClick={() => remove(index)}
                     aria-label={`Remove ${key || `row ${index + 1}`}`}
-                    className="grid size-full place-items-center text-ink-950/40 transition-colors hover:bg-brand-600 hover:text-news-100"
+                    className={cn(
+                      'grid size-full place-items-center text-lume-600 transition-colors',
+                      'hover:bg-brand-600 hover:text-white',
+                      'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-volt-400',
+                    )}
                   >
                     ×
                   </button>
@@ -390,7 +420,7 @@ function PairsInput({ field, value, onChange }) {
         </>
       )}
 
-      <div className={cn('border-t bg-news-200 px-2.5 py-2', EDGE)}>
+      <div className={cn('border-t bg-rig-900 px-2.5 py-2.5', EDGE)}>
         <Action size="sm" onClick={() => onChange({ ...(value ?? {}), '': '' })}>
           Add row
         </Action>
@@ -438,27 +468,33 @@ function ObjectsInput({ field, value, onChange }) {
   }
 
   return (
-    <div className={cn('border', EDGE)}>
+    <div className={cn('overflow-hidden rounded-[2px] border', EDGE)}>
       {rows.length === 0 ? (
-        <p className={cn(MICRO, 'px-3 py-3 text-ink-950/40')}>None</p>
+        <p className={cn(LEGEND, 'bg-rig-900 px-3 py-3.5 text-lume-600')}>None</p>
       ) : (
         rows.map((row, index) => (
           <div key={index} className={cn(index > 0 && 'border-t', EDGE)}>
-            <div className={cn('flex items-center justify-between gap-2 border-b bg-news-200 px-2.5 py-1.5', EDGE)}>
-              <span className={cn(MICRO, 'text-ink-950/45')}>
+            <div className={cn('flex items-center justify-between gap-2 border-b bg-rig-900 px-2.5 py-2', EDGE)}>
+              <span className={cn(LEGEND, 'flex items-center gap-2 text-lume-400')}>
                 {/* The index is the label. These rows have no stable name of their
                     own — a colourway can be renamed, a body block never has a name
                     — and the position is what matters anyway, since the first entry
                     is the one the site leads on. */}
-                {field.addLabel ? `${String(index + 1).padStart(2, '0')} /` : String(index + 1).padStart(2, '0')}
-                {field.addLabel && <span className="ml-1.5">{row.name || row.title || row.type || '—'}</span>}
+                <span className={cn(DATA, 'text-volt-400')}>
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                {field.addLabel && <span>{row.name || row.title || row.type || '—'}</span>}
               </span>
 
-              <span className="flex items-center">
+              <span className="flex items-center gap-0.5">
                 <RowAction onClick={() => move(index, -1)} disabled={index === 0} label="Move up">
                   ↑
                 </RowAction>
-                <RowAction onClick={() => move(index, 1)} disabled={index === rows.length - 1} label="Move down">
+                <RowAction
+                  onClick={() => move(index, 1)}
+                  disabled={index === rows.length - 1}
+                  label="Move down"
+                >
                   ↓
                 </RowAction>
                 <RowAction onClick={() => remove(index)} label="Remove" danger>
@@ -467,11 +503,14 @@ function ObjectsInput({ field, value, onChange }) {
               </span>
             </div>
 
-            <div className={cn('grid gap-px sm:grid-cols-2', SHEET)}>
+            <div className={cn('grid gap-px sm:grid-cols-2', VOID)}>
               {field.subfields.map((sub) => (
                 <div
                   key={sub.name}
-                  className={cn(CELL, 'p-2.5', sub.width === 'half' ? 'sm:col-span-1' : 'sm:col-span-2')}
+                  className={cn(
+                    'bg-rig-950 p-2.5',
+                    sub.width === 'half' ? 'sm:col-span-1' : 'sm:col-span-2',
+                  )}
                 >
                   <FieldControl
                     field={sub}
@@ -486,7 +525,7 @@ function ObjectsInput({ field, value, onChange }) {
         ))
       )}
 
-      <div className={cn('border-t bg-news-200 px-2.5 py-2', EDGE)}>
+      <div className={cn('border-t bg-rig-900 px-2.5 py-2.5', EDGE)}>
         <Action size="sm" onClick={add}>
           {field.addLabel ?? 'Add'}
         </Action>
@@ -504,9 +543,10 @@ function RowAction({ onClick, disabled, label, danger, children }) {
       aria-label={label}
       title={label}
       className={cn(
-        'grid size-6 place-items-center text-[12px] transition-colors',
+        'grid size-6 place-items-center rounded-[2px] text-[12px] text-lume-600 transition-colors',
         'disabled:pointer-events-none disabled:opacity-25',
-        danger ? 'text-ink-950/50 hover:bg-brand-600 hover:text-news-100' : 'text-ink-950/50 hover:bg-ink-950 hover:text-news-100',
+        'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-volt-400',
+        danger ? 'hover:bg-brand-600 hover:text-white' : 'hover:bg-rig-850 hover:text-lume-100',
       )}
     >
       {children}

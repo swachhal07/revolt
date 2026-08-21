@@ -41,7 +41,7 @@ export function assertPort(adapter, name) {
   if (missing.length > 0) {
     throw new Error(
       `The "${name}" backend adapter is missing: ${missing.join(', ')}. ` +
-        `See src/admin/backend/port.js for the contract.`,
+        `See src/admin/data/port.js for the contract.`,
     )
   }
 

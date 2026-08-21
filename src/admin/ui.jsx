@@ -1,62 +1,130 @@
 import { cn } from '@/utils/cn'
 
 /**
- * The admin's design system: Swiss industrial print.
+ * The admin's design system: the instrument cluster.
  *
- * One substrate, committed to absolutely — matte unbleached paper, carbon ink,
- * and hazard red as the only other colour in the building. No gradients, no
- * translucent fills, no shadows, and not one rounded corner. Every apparent
- * elevation is a hairline instead, because a printed manual has no z-axis.
+ * The back office is not a page about the motorcycles — it is the rig the
+ * motorcycles are read out on. So it is built as a moulded object under a
+ * backlight: cold graphite panels with a machined lip, legends printed in lume,
+ * and one live colour. Every screen in here is a binnacle.
  *
- * The type is bimodal by design and the gap between the two registers is the
- * whole hierarchy: `MACRO` is a heavy grotesque set enormous and tracked tight
- * enough that the glyphs form blocks; `MICRO` is 10–11px monospace, uppercase,
- * tracked wide, and carries *everything* else — labels, headers, metadata, unit
- * IDs, button text. There is deliberately almost nothing in between. A tool with
- * six type sizes looks designed by committee; this one has two and a body size.
+ * ── The three rules ────────────────────────────────────────────────────────
  *
- * ── The hairline technique ─────────────────────────────────────────────────
- * Rules are drawn with `grid gap-px` over a carbon ground rather than with
- * borders: children painted `bg-news-100` sit on `bg-ink-950` and the gap is the
- * ground showing through. One hairline between neighbours, always exactly 1px at
- * any zoom, and no doubled edge where two bordered boxes meet. `SHEET` and `CELL`
- * below are that pair.
+ * 1. Volt is signal, red is fault, and nothing else is coloured. Volt marks what
+ *    is live, active, focused or committing; brand red appears only when
+ *    something is wrong or about to be destroyed. A tool where the accent means
+ *    "this is important" everywhere has an accent that means nothing, and on an
+ *    instrument the whole point of a lit element is that it is the exception.
+ *
+ * 2. Depth is edges, not shadows. Elevation is a 1px light catch on the top of a
+ *    surface and a 1px shadow under it (`bezel`), or the same pair inverted for
+ *    anything sunk into the moulding (`inset-well`). No blurred drop shadows —
+ *    that is how a dark theme turns into a stack of floating cards.
+ *
+ * 3. Type is trimodal, and the gaps carry the hierarchy. `GAUGE` is Oxanium set
+ *    large for headings and numerals; `LEGEND` is 10px mono, uppercase, tracked
+ *    wide, and carries every label, header, tag and button in the tool; `PROSE`
+ *    is the only place Plus Jakarta Sans appears, reserved for the sentences
+ *    that actually have to be read as sentences. Three registers, no ladder of
+ *    sizes in between.
+ *
+ * ── The tick rail ──────────────────────────────────────────────────────────
+ * The signature. A dial's graduation scale, drawn as two stacked gradients:
+ * short minor ticks every 8px and a tall major every 48px. It sits under
+ * readouts, along panel feet and beneath the page title, and it is what makes
+ * an otherwise ordinary table read as part of an instrument. See `TickRail`.
  */
 
 /* ── Type registers ───────────────────────────────────────────────────────── */
 
-/** Structural headings. Never smaller than this; never given a weight utility. */
-export const MACRO = 'font-macro uppercase leading-[0.9] tracking-[-0.03em]'
+/** Headings and numerals. Oxanium; set a weight, it has three. */
+export const GAUGE = 'font-gauge font-bold uppercase leading-[0.88] tracking-[-0.01em]'
 
-/** Everything else. Labels, headers, metadata, actions, unit IDs. */
-export const MICRO = 'font-mono text-[10px] uppercase leading-none tracking-[0.09em]'
+/** Labels, headers, tags, buttons, metadata. Everything structural. */
+export const LEGEND = 'font-mono text-[10px] font-normal uppercase leading-none tracking-[0.14em]'
 
-/** Numbers that are read as measurements rather than as prose. */
-export const DATA = 'font-mono tabular-nums tracking-[0.02em]'
+/** Figures read as measurements. Tabular so digits stack down a column. */
+export const DATA = 'font-mono tabular-nums tracking-[0.01em]'
 
-/* ── The hairline pair ────────────────────────────────────────────────────── */
+/** Sentences. The only non-mono, non-gauge text in the admin. */
+export const PROSE = 'font-body text-[12.5px] leading-[1.6] text-lume-400'
 
-/** The carbon ground a grid's gaps expose. Apply with `grid gap-px`. */
-export const SHEET = 'bg-ink-950'
+/* ── Surfaces ─────────────────────────────────────────────────────────────── */
 
-/** A cell sitting on that ground. */
-export const CELL = 'bg-news-100'
+/** The void panels sit in. Also the ground a `grid gap-px` exposes as hairlines. */
+export const VOID = 'bg-rig-990'
 
-/** For the few places a real border is unavoidable (a single element, no grid). */
-export const EDGE = 'border-ink-950/85'
+/** A panel face. */
+export const FACE = 'bg-rig-950'
+
+/** The bezel hairline. */
+export const EDGE = 'border-rig-700'
+
+/* ── The tick rail ────────────────────────────────────────────────────────── */
+
+/**
+ * A dial graduation scale.
+ *
+ * Two gradients in one element rather than a row of divs: minor ticks are sized
+ * to half the element's height and majors to all of it, both anchored to the
+ * bottom, so the scale has real hierarchy for the cost of one background.
+ *
+ * `sweep` runs it out from the left on mount, which is the cheapest possible
+ * version of an instrument powering up and the reason it is worth having on the
+ * overview at all.
+ */
+export function TickRail({ className, sweep, delay = 0 }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn('block h-2.5 w-full origin-left', sweep && 'animate-needle', className)}
+      style={{
+        animationDelay: sweep ? `${delay}ms` : undefined,
+        backgroundImage:
+          'linear-gradient(to right, var(--color-lume-600) 0 1px, transparent 1px), linear-gradient(to right, var(--color-rig-700) 0 1px, transparent 1px)',
+        backgroundSize: '48px 100%, 8px 50%',
+        backgroundPosition: 'left bottom, left bottom',
+        backgroundRepeat: 'repeat-x, repeat-x',
+      }}
+    />
+  )
+}
+
+/**
+ * A status lamp. Volt when live, dark and outlined when not.
+ *
+ * Square rather than round: everything moulded in this interface has corners,
+ * and a circle in it reads as a web component that wandered in.
+ */
+export function Lamp({ live, alarm, className }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        'size-1.5 shrink-0',
+        alarm ? 'animate-blink bg-brand-500' : live ? 'bg-volt-400 lume' : 'bg-rig-700',
+        className,
+      )}
+    />
+  )
+}
 
 /* ── Actions ──────────────────────────────────────────────────────────────── */
 
 const ACTION_VARIANTS = {
-  // Carbon block, paper type. The primary action is the darkest thing in its
-  // zone, which on a light substrate is how "primary" is stated without colour.
-  primary: 'bg-ink-950 text-news-100 hover:bg-brand-600',
-  // Outlined. The default, and quiet enough to repeat.
-  default: 'border border-ink-950/85 bg-transparent text-ink-950 hover:bg-ink-950 hover:text-news-100',
-  // No frame until it is reached. For tertiary actions in dense rows.
-  bare: 'text-ink-950/70 hover:bg-ink-950 hover:text-news-100',
-  // Hazard red, and the only element permitted to use it as a fill.
-  danger: 'border border-brand-600 text-brand-600 hover:bg-brand-600 hover:text-news-100',
+  // The lit control. Volt fill, near-black type — the only element in the tool
+  // that is brighter than the text around it, which is precisely what makes it
+  // read as the thing to press.
+  //
+  // `ink-950` rather than `rig-990`: the label has to stay black on volt inside
+  // the worksheet too, and `rig-990` is one of the tokens the sheet re-points.
+  primary: 'bg-volt-400 text-ink-950 hover:bg-volt-300 hover:lume',
+  // Outlined moulding. The default, and quiet enough to repeat in a row.
+  default: 'border border-rig-700 bg-rig-900 text-lume-100 bezel hover:border-lume-600 hover:bg-rig-850',
+  // No frame until reached. Tertiary actions inside dense rows.
+  bare: 'text-lume-600 hover:bg-rig-850 hover:text-lume-100',
+  // Fault. The only variant permitted brand red, and it fills only on commit.
+  danger: 'border border-brand-500/60 text-brand-400 hover:border-brand-500 hover:bg-brand-600 hover:text-white',
 }
 
 const ACTION_SIZES = {
@@ -65,135 +133,147 @@ const ACTION_SIZES = {
 }
 
 /**
+ * The classes an action wears, exposed on their own.
+ *
+ * Because half the actions in this admin are not buttons. "Open", "Edit" and
+ * "Back to the register" all navigate, so they have to be real anchors —
+ * copyable, middle-clickable, and openable in a new tab — and a `<button>` that
+ * calls `navigate()` is none of those things. Handing out the classes rather
+ * than a second `ActionLink` component keeps this file free of a router import,
+ * and keeps one definition of what an action looks like.
+ */
+export function actionClass({ variant = 'default', size = 'md', className } = {}) {
+  return cn(
+    'inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-[2px]',
+    LEGEND,
+    // Fast, and colour only. An instrument acknowledges a press; it does not
+    // animate itself in response to one.
+    'transition-[background-color,border-color,color,box-shadow] duration-100',
+    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-volt-400',
+    'disabled:pointer-events-none disabled:opacity-35',
+    ACTION_VARIANTS[variant],
+    ACTION_SIZES[size],
+    className,
+  )
+}
+
+/**
  * A button.
  *
- * `chevrons` appends `>>>` — the directional marker this idiom uses for anything
- * that commits or advances. It is on the label rather than being a separate icon
- * because it is type, not an illustration, and it should track and colour with
- * the word it follows.
+ * `arrow` appends `▸` — the marker this idiom uses for anything that commits or
+ * advances. Type rather than an icon, so it tracks and colours with the word it
+ * follows instead of needing its own alignment rules.
  */
-export function Action({ variant = 'default', size = 'md', chevrons, className, children, ...props }) {
+export function Action({ variant, size, arrow, className, children, ...props }) {
   return (
-    <button
-      type="button"
-      className={cn(
-        'inline-flex shrink-0 items-center justify-center whitespace-nowrap',
-        MICRO,
-        'transition-colors duration-100', // Fast and linear. A tool acknowledges; it does not ease.
-        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600',
-        'disabled:pointer-events-none disabled:opacity-40',
-        ACTION_VARIANTS[variant],
-        ACTION_SIZES[size],
-        className,
-      )}
-      {...props}
-    >
+    <button type="button" className={actionClass({ variant, size, className })} {...props}>
       {children}
-      {chevrons && <span aria-hidden="true">&gt;&gt;&gt;</span>}
+      {arrow && <span aria-hidden="true">▸</span>}
     </button>
   )
 }
 
-/* ── Compartments ─────────────────────────────────────────────────────────── */
+/* ── Panels ───────────────────────────────────────────────────────────────── */
 
 /**
- * A bordered zone. The admin's only container, and it is a frame rather than a
- * card — no fill of its own, no shadow, no radius.
+ * A moulded panel. The admin's only container.
+ *
+ * 2px of radius, which is not a compromise between sharp and round — it is the
+ * radius a moulding tool actually leaves. At 0 the panels read as vector boxes;
+ * at 8 they read as a web card, which is the failure mode this whole design is
+ * built to avoid.
  */
-export function Zone({ className, children, ...props }) {
+export function Panel({ className, children, ...props }) {
   return (
-    <section className={cn('border', EDGE, CELL, className)} {...props}>
+    <section
+      className={cn('knurl rounded-[2px] border bezel', EDGE, FACE, className)}
+      {...props}
+    >
       {children}
     </section>
   )
 }
 
 /**
- * A zone's header bar: an ASCII-framed label, a unit id, and actions.
+ * A panel's header bar: a lamp, a label, a unit reading, and actions.
  *
- * The `[ ]` framing is doing real work rather than being decoration — it is what
- * separates a 10px tracked label from the 10px tracked data sitting under it,
- * without spending a second type size on the distinction.
+ * The lamp is doing the work the old idiom's `[ ]` brackets did — separating a
+ * 10px tracked label from the 10px tracked data beneath it without spending a
+ * fourth type size on the distinction. It is also honest: a panel that is
+ * showing something is lit, and a panel reporting a fault is not.
  */
-export function ZoneHead({ label, unit, children }) {
+export function PanelHead({ label, unit, alarm, children }) {
   return (
     <header
       className={cn(
-        'flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b bg-news-200 px-3 py-2',
+        'flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-t-[1px] border-b bg-rig-900 px-3 py-2.5',
         EDGE,
       )}
     >
-      <h2 className={cn(MICRO, 'text-ink-950')}>
-        <span aria-hidden="true" className="text-ink-950/40">
-          [{' '}
-        </span>
+      <h2 className={cn(LEGEND, 'flex items-center gap-2.5 text-lume-100')}>
+        <Lamp live={!alarm} alarm={alarm} />
         {label}
-        <span aria-hidden="true" className="text-ink-950/40">
-          {' '}]
-        </span>
       </h2>
 
       <div className="flex items-center gap-3">
-        {unit && <span className={cn(MICRO, 'text-ink-950/45')}>{unit}</span>}
+        {unit && <span className={cn(LEGEND, DATA, 'text-lume-600')}>{unit}</span>}
         {children}
       </div>
     </header>
   )
 }
 
-/** A full-width rule. The hazard variant marks an edge that matters. */
-export function Rule({ hazard }) {
-  return hazard ? (
-    <hr aria-hidden="true" className="hazard h-1 border-0" />
-  ) : (
-    <hr aria-hidden="true" className={cn('border-t', EDGE)} />
-  )
-}
-
-/**
- * A registration mark, for a grid intersection or a zone corner.
- *
- * Positioned by the caller. Straddles whatever it is placed on, which is why it
- * is translated rather than inset — a crosshair inside a corner is a decoration,
- * a crosshair on a corner is a register.
- */
-export function Crosshair({ className }) {
+/** A panel's foot: the strip a repeated commit or an add-row control sits on. */
+export function PanelFoot({ className, children }) {
   return (
-    <span
-      aria-hidden="true"
+    <div
       className={cn(
-        'pointer-events-none absolute grid size-3 place-items-center text-[11px] leading-none text-ink-950',
+        'flex flex-wrap items-center justify-between gap-3 rounded-b-[1px] border-t bg-rig-900 px-3 py-2.5',
+        EDGE,
         className,
       )}
     >
-      +
-    </span>
+      {children}
+    </div>
+  )
+}
+
+/** A full-width hairline. The alarm variant marks an edge that matters. */
+export function Rule({ alarm }) {
+  return (
+    <hr
+      aria-hidden="true"
+      className={cn('border-0 border-t', alarm ? 'border-brand-500/70' : 'border-rig-700')}
+    />
   )
 }
 
 /* ── Controls ─────────────────────────────────────────────────────────────── */
 
-// Square, filled with a recessed paper tone rather than white, and the focus
-// state is a carbon frame rather than a ring — a glow is the one thing a printed
-// control cannot do.
+// Sunk into the moulding rather than raised out of it: a field is a well you put
+// something into. Focus lights the lip volt and blooms, because on a backlit
+// object that is what "this one is receiving input" looks like — a ring would be
+// borrowing from a light-theme design system.
 const CONTROL = cn(
-  'w-full appearance-none rounded-none border bg-news-100 px-2.5 py-2 text-[14px] text-ink-950',
-  'placeholder:text-ink-950/35',
-  'focus:border-ink-950 focus:bg-white focus:outline-none',
-  'border-ink-950/30',
+  'w-full appearance-none rounded-[2px] border bg-rig-900 px-2.5 py-2 text-[13.5px] text-lume-100 inset-well',
+  'border-rig-700 placeholder:text-lume-600',
+  'transition-[border-color,box-shadow] duration-100',
+  'focus:border-volt-400/70 focus:bg-rig-850 focus:outline-none focus:lume',
 )
 
 export const CONTROL_CLASS = CONTROL
 
+const INVALID = 'border-brand-500/70 bg-brand-900/25'
+
 export function TextInput({ invalid, className, ...props }) {
-  return <input className={cn(CONTROL, invalid && 'border-brand-600 bg-brand-50', className)} {...props} />
+  return <input className={cn(CONTROL, invalid && INVALID, className)} {...props} />
 }
 
 export function TextArea({ invalid, rows = 3, className, ...props }) {
   return (
     <textarea
       rows={rows}
-      className={cn(CONTROL, 'resize-y leading-relaxed', invalid && 'border-brand-600 bg-brand-50', className)}
+      className={cn(CONTROL, 'resize-y leading-relaxed', invalid && INVALID, className)}
       {...props}
     />
   )
@@ -201,9 +281,15 @@ export function TextArea({ invalid, rows = 3, className, ...props }) {
 
 export function Select({ options = [], invalid, className, ...props }) {
   return (
-    <select className={cn(CONTROL, MICRO, 'h-9 py-0 pr-7', invalid && 'border-brand-600', className)} {...props}>
+    <select
+      className={cn(CONTROL, LEGEND, 'h-9 py-0 pr-7', invalid && INVALID, className)}
+      {...props}
+    >
       {options.map((option) => (
-        <option key={option.value} value={option.value}>
+        // The native menu is drawn by the OS and inherits none of this, so the
+        // options are given the panel's own colours explicitly — otherwise a
+        // dark control opens a white list on every platform but macOS.
+        <option key={option.value} value={option.value} className="bg-rig-900 text-lume-100">
           {option.label}
         </option>
       ))}
@@ -214,9 +300,9 @@ export function Select({ options = [], invalid, className, ...props }) {
 /**
  * Label, help, control, error.
  *
- * The label is `MICRO`, so it is the same size as a table header and a button —
- * the point of having one metadata register is that a field label and a column
- * header are the same *kind* of thing and should not argue about it.
+ * The label is `LEGEND`, the same register as a column header and a button — the
+ * point of having one metadata register is that a field label and a table header
+ * are the same kind of object and should not argue about it.
  *
  * Help sits above the control. Help underneath is read after the field has been
  * filled in, which is too late to be help.
@@ -224,24 +310,22 @@ export function Select({ options = [], invalid, className, ...props }) {
 export function Field({ label, help, error, required, htmlFor, children, className }) {
   return (
     <div className={cn('min-w-0', className)}>
-      <label htmlFor={htmlFor} className={cn(MICRO, 'flex items-baseline gap-1 text-ink-950')}>
+      <label htmlFor={htmlFor} className={cn(LEGEND, 'flex items-baseline gap-1.5 text-lume-100')}>
         {label}
         {required && (
-          <span aria-hidden="true" className="text-brand-600">
-            ®
+          <span aria-hidden="true" title="Required" className="text-volt-400">
+            •
           </span>
         )}
       </label>
 
-      {help && (
-        <p className="mt-1.5 max-w-[62ch] text-[12.5px] leading-[1.5] text-ink-950/55">{help}</p>
-      )}
+      {help && <p className={cn(PROSE, 'mt-1.5 max-w-[62ch] text-lume-600')}>{help}</p>}
 
       <div className="mt-2">{children}</div>
 
       {error && (
-        <p role="alert" className={cn(MICRO, 'mt-1.5 text-brand-600')}>
-          <span aria-hidden="true">/// </span>
+        <p role="alert" className={cn(LEGEND, 'mt-2 flex items-center gap-2 text-brand-400')}>
+          <Lamp alarm />
           {error}
         </p>
       )}
@@ -252,82 +336,89 @@ export function Field({ label, help, error, required, htmlFor, children, classNa
 /* ── Readouts ─────────────────────────────────────────────────────────────── */
 
 const TAG_TONES = {
-  neutral: 'border-ink-950/30 text-ink-950/70',
-  live: 'border-ink-950 bg-ink-950 text-news-100',
-  draft: 'border-ink-950/30 bg-news-300 text-ink-950/70',
-  warn: 'border-brand-600 text-brand-600',
+  neutral: 'border-rig-700 text-lume-400',
+  live: 'border-volt-400/40 bg-volt-400/10 text-volt-300',
+  draft: 'border-rig-700 bg-rig-850 text-lume-600',
+  warn: 'border-brand-500/50 bg-brand-500/10 text-brand-400',
 }
 
-/** A status marker. Square, outlined, `MICRO` — never a coloured pill. */
+/** A status marker: a lamp and a word. Never a filled pill. */
 export function Tag({ tone = 'neutral', children }) {
   return (
-    <span className={cn(MICRO, 'inline-flex items-center border px-1.5 py-1', TAG_TONES[tone])}>
+    <span
+      className={cn(
+        LEGEND,
+        'inline-flex items-center gap-2 rounded-[2px] border px-2 py-1.5',
+        TAG_TONES[tone],
+      )}
+    >
+      <Lamp live={tone === 'live'} alarm={tone === 'warn'} />
       {children}
     </span>
   )
 }
 
 /**
- * A number set as a measurement: macro scale, with its unit label in micro
- * beneath. This is the bimodal contrast in its smallest form, and the one place
- * the admin is allowed to be loud.
+ * A count, set as a gauge: the numeral at dial scale, its legend above, a tick
+ * rail beneath, and the action under that.
+ *
+ * This is the bimodal contrast at full strength and the one place the admin is
+ * allowed to be loud. The rail is not decoration — it is what stops a large
+ * number from reading as a marketing statistic.
  */
-export function Readout({ value, label, href }) {
+export function Readout({ value, label, action, delay = 0 }) {
   return (
-    <div className="flex flex-col justify-between gap-6 p-3">
-      <span className={cn(MICRO, 'text-ink-950/45')}>{label}</span>
-      <data className={cn(MACRO, DATA, 'text-[clamp(3rem,7vw,5rem)] tracking-[-0.05em] text-ink-950')}>
-        {value}
-      </data>
-      {href}
+    <div
+      className="animate-power-on flex flex-col gap-5 p-4 sm:p-5"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <span className={cn(LEGEND, 'text-lume-600')}>{label}</span>
+
+      <div>
+        <data
+          className={cn(
+            GAUGE,
+            DATA,
+            'block font-extrabold text-[clamp(3.25rem,8vw,5.5rem)] tracking-[-0.04em] text-lume-100',
+          )}
+        >
+          {value}
+        </data>
+        <TickRail sweep delay={delay + 120} className="mt-2" />
+      </div>
+
+      {action}
     </div>
   )
 }
 
 /**
- * A whole-zone state: loading, empty, or failed.
+ * A whole-panel state: loading, empty, or failed.
  *
- * One component for the three because they occupy the same slot and a screen with
- * a designed empty state but an undesigned error state shows a blank box on the
- * day it matters most. Machine-voiced (`<samp>`), because that is what it is.
+ * One component for the three because they occupy the same slot, and a screen
+ * with a designed empty state but an undesigned error state shows a blank box on
+ * the day it matters most. Machine-voiced (`<samp>`), because that is what it is
+ * — a cluster reporting on itself.
  */
 export function State({ kind = 'empty', title, detail, children }) {
-  const marks = { loading: '/// ///', empty: '— — —', error: '!!!' }
+  const marks = { loading: '▮ ▮ ▮', empty: '· · ·', error: '⚠ ⚠ ⚠' }
 
   return (
-    <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-center">
+    <div className="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
       <samp
         aria-hidden="true"
         className={cn(
-          MICRO,
-          'tracking-[0.3em]',
-          kind === 'error' ? 'text-brand-600' : 'text-ink-950/35',
+          LEGEND,
+          'tracking-[0.4em]',
+          kind === 'error' ? 'text-brand-500' : 'text-rig-700',
           kind === 'loading' && 'animate-pulse',
         )}
       >
         {marks[kind]}
       </samp>
-      <p className={cn(MICRO, kind === 'error' ? 'text-brand-600' : 'text-ink-950')}>{title}</p>
-      {detail && <p className="max-w-[46ch] text-[12.5px] leading-[1.5] text-ink-950/55">{detail}</p>}
+      <p className={cn(LEGEND, kind === 'error' ? 'text-brand-400' : 'text-lume-100')}>{title}</p>
+      {detail && <p className={cn(PROSE, 'max-w-[48ch] text-lume-600')}>{detail}</p>}
       {children}
     </div>
-  )
-}
-
-/**
- * A barcode block. Drawn with a gradient rather than set as type, so it costs no
- * font and carries no content — an industrial marker in the literal sense.
- */
-export function Barcode({ className, invert }) {
-  const ink = invert ? '#f4f4f0' : '#050505'
-
-  return (
-    <span
-      aria-hidden="true"
-      className={cn('block h-4', className)}
-      style={{
-        backgroundImage: `repeating-linear-gradient(90deg, ${ink} 0 1px, transparent 1px 3px, ${ink} 3px 5px, transparent 5px 8px, ${ink} 8px 9px, transparent 9px 13px)`,
-      }}
-    />
   )
 }

@@ -1,17 +1,22 @@
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { cn } from '@/utils/cn'
-import { COLLECTIONS, COLLECTION_KEYS } from './backend/schema'
-import { BACKEND_NAME, IS_LOCAL_BACKEND } from './backend'
-import { signOut } from './backend/session'
-import { Barcode, Crosshair, EDGE, MACRO, MICRO, Rule, Tag } from './ui'
+import { COLLECTIONS, COLLECTION_KEYS } from './data/schema'
+import { BACKEND_NAME, IS_LOCAL_BACKEND } from './data'
+import { signOut } from './data/session'
+import { DATA, EDGE, GAUGE, Lamp, LEGEND, PROSE, TickRail } from './ui'
 
 /**
- * The admin's chrome: a carbon rail against the paper sheet.
+ * The admin's chrome: the binnacle the panels are mounted in.
  *
- * The rail is the one dark mass in the interface and it is the exception that
- * proves the substrate — a sheet of paper with a black bar printed down its edge,
- * not a dark theme with a light panel. Everything the rail carries is `MICRO`, so
- * it reads as a printed index rather than as navigation furniture.
+ * The rail is a darker moulding than the panels beside it rather than a lighter
+ * one — the housing an instrument sits in is behind it, not in front. That is
+ * also why it carries no fill on its active state: the channel that is selected
+ * is marked by a lit bar on its edge, the way a mode switch on a cluster is,
+ * because a filled block inside the housing would be a second panel where there
+ * should be none.
+ *
+ * Everything the rail carries is `LEGEND`, so it reads as a printed switch
+ * legend rather than as navigation furniture.
  *
  * The site's own navbar is deliberately absent. This is a separate application
  * that shares a domain, and a marketing header over a spec table is how a back
@@ -21,15 +26,18 @@ export default function Shell({ onSignOut, children }) {
   const { pathname } = useLocation()
 
   return (
-    <div className="halftone min-h-dvh bg-news-100 font-body text-ink-950">
-      {/* Grain over the sheet. The halftone gives it dot texture; this gives it
-          tooth. Both are near-invisible alone and neither is optional: a screen
-          built entirely from flat fills and 1px rules is vector-perfect in a way
-          no printed thing has ever been. `multiply` because the substrate is
-          light — an overlay blend on paper lifts it instead of dirtying it. */}
+    <div className="min-h-dvh bg-rig-990 font-body text-lume-100">
+      {/* The backlight. A cluster is lit from inside its own housing, so the
+          brightest point of the substrate is behind the working area and it
+          falls off to the edges. Fixed rather than scrolling: the lamp is in the
+          rig, not on the page. Cheap — one radial gradient, no blend mode. */}
       <div
         aria-hidden="true"
-        className="grain pointer-events-none fixed inset-0 opacity-[0.35] mix-blend-multiply"
+        className="pointer-events-none fixed inset-0"
+        style={{
+          background:
+            'radial-gradient(120% 80% at 50% 0%, oklch(24% 0.016 255) 0%, transparent 60%)',
+        }}
       />
 
       <div className="relative flex min-h-dvh flex-col lg:flex-row">
@@ -38,19 +46,36 @@ export default function Shell({ onSignOut, children }) {
         <div className="flex min-w-0 flex-1 flex-col">
           {IS_LOCAL_BACKEND && <LocalNotice />}
 
-          {/* `key` resets scroll and mount state per route: without it, opening a
-              long model page and then a short one leaves you scrolled past the
-              bottom of the new one. */}
-          <main key={pathname} className="mx-auto w-full max-w-[1180px] flex-1 px-4 py-6 sm:px-8 sm:py-10">
+          {/* Hung off the rail rather than centred in what is left of the
+              viewport. A centred measure is right for a document and wrong for a
+              console: it opens a gap beside the nav that grows with the screen,
+              so the switch legend and the panel it selects drift apart exactly
+              when there is most room for them to. Left-aligned, the rail and the
+              readout stay one assembly at any width.
+
+              `max-w` still caps the measure, because a 24-column table stretched
+              across an ultrawide is not denser, only wider.
+
+              `key` resets scroll and mount state per route — and replays the
+              power-on stagger, which is the point of having it. Without it,
+              opening a long model page and then a short one also leaves you
+              scrolled past the bottom of the new one. */}
+          <main
+            key={pathname}
+            className="w-full max-w-[1240px] flex-1 px-4 py-6 sm:px-8 sm:py-10"
+          >
             {children}
           </main>
 
-          <footer className={cn('mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 border-t px-4 py-3 sm:px-8', EDGE)}>
-            <span className={cn(MICRO, 'text-ink-950/45')}>© Revolt Nepal</span>
-            <span className={cn(MICRO, 'text-ink-950/45')}>MV Dugar Group</span>
-            <span className={cn(MICRO, 'ml-auto text-ink-950/45')}>
-              Adapter / {BACKEND_NAME.toUpperCase()}
-            </span>
+          <footer className={cn('mt-auto border-t px-4 py-3 sm:px-8', EDGE)}>
+            <div className={cn(LEGEND, 'flex flex-wrap items-center gap-x-5 gap-y-2 text-lume-600')}>
+              <span>© Revolt Nepal</span>
+              <span>MV Dugar Group</span>
+              <span className={cn(DATA, 'ml-auto flex items-center gap-2')}>
+                <Lamp live={!IS_LOCAL_BACKEND} alarm={IS_LOCAL_BACKEND} />
+                Adapter / {BACKEND_NAME.toUpperCase()}
+              </span>
+            </div>
           </footer>
         </div>
       </div>
@@ -60,45 +85,59 @@ export default function Shell({ onSignOut, children }) {
 
 function Rail({ onSignOut }) {
   return (
-    <aside className={cn('relative shrink-0 border-b bg-ink-950 text-news-100 lg:w-56 lg:border-b-0 lg:border-r', EDGE)}>
-      <Crosshair className="right-0 top-0 translate-x-1/2 -translate-y-1/2 text-news-100 lg:text-ink-950" />
-
-      <div className="flex items-center justify-between gap-4 px-4 py-4 lg:block">
+    <aside
+      className={cn(
+        'knurl relative z-10 shrink-0 border-b bg-rig-990 lg:flex lg:h-dvh lg:w-60 lg:flex-col',
+        'lg:sticky lg:top-0 lg:border-b-0 lg:border-r',
+        EDGE,
+      )}
+    >
+      <div className="flex items-center justify-between gap-4 px-5 py-4 lg:block lg:py-5">
         <Link to="/admin" className="block">
-          <span className={cn(MACRO, 'block text-[22px] text-news-100')}>Revolt</span>
-          <span className={cn(MICRO, 'mt-1 block text-news-100/50')}>Back office / D-01</span>
+          <span className={cn(GAUGE, 'block text-[26px] font-extrabold text-lume-100')}>
+            Revolt
+          </span>
+          <span className={cn(LEGEND, 'mt-1.5 block text-lume-600')}>Cluster / D-01</span>
         </Link>
 
-        {/* On a phone the rail is a horizontal strip with no bottom to pin to, so
+        {/* On a phone the rail is a horizontal strip with no foot to pin to, so
             the sign-out sits up beside the wordmark instead. */}
         <div className="lg:hidden">
           <SignOut onSignOut={onSignOut} />
         </div>
       </div>
 
-      <Barcode invert className="mx-4 hidden opacity-70 lg:block" />
+      <TickRail className="mx-5 hidden opacity-60 lg:block" />
 
-      <nav className="flex gap-px overflow-x-auto px-4 pb-3 lg:mt-5 lg:flex-col lg:overflow-visible">
-        <RailLink to="/admin" end>
+      {/* Channels, numbered. The number is not ornament: these are the tool's
+          fixed inputs, they never reorder, and a numbered switch legend is how
+          you learn a panel by muscle memory rather than by reading it. */}
+      <nav className="flex gap-1 overflow-x-auto px-3 pb-3 lg:mt-5 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:px-3">
+        <RailLink to="/admin" index={0} end>
           Overview
         </RailLink>
-        {COLLECTION_KEYS.map((key) => (
-          <RailLink key={key} to={`/admin/${key}`}>
+        {COLLECTION_KEYS.map((key, position) => (
+          <RailLink key={key} to={`/admin/${key}`} index={position + 1}>
             {COLLECTIONS[key].label}
           </RailLink>
         ))}
       </nav>
 
-      <div className="mt-auto hidden px-4 py-4 lg:block">
+      <div className="mt-auto hidden px-5 py-5 lg:block">
+        <TickRail className="mb-5 opacity-40" />
         <a
           href="/"
           target="_blank"
           rel="noreferrer"
-          className={cn(MICRO, 'block text-news-100/50 transition-colors hover:text-news-100')}
+          className={cn(
+            LEGEND,
+            'block text-lume-600 transition-colors hover:text-lume-100',
+            'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-volt-400',
+          )}
         >
           View site ↗
         </a>
-        <div className="mt-3">
+        <div className="mt-3.5">
           <SignOut onSignOut={onSignOut} />
         </div>
       </div>
@@ -106,25 +145,35 @@ function Rail({ onSignOut }) {
   )
 }
 
-function RailLink({ to, end, children }) {
+function RailLink({ to, index, end, children }) {
   return (
     <NavLink
       to={to}
       end={end}
       className={({ isActive }) =>
         cn(
-          MICRO,
-          'flex items-center gap-2 whitespace-nowrap py-2.5 transition-colors lg:px-0',
-          isActive ? 'text-news-100' : 'text-news-100/45 hover:text-news-100',
+          LEGEND,
+          'group relative flex items-center gap-3 whitespace-nowrap rounded-[2px] py-2.5 pl-3 pr-3',
+          'transition-colors duration-100',
+          'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-volt-400',
+          isActive ? 'bg-rig-950 text-lume-100' : 'text-lume-600 hover:bg-rig-950/60 hover:text-lume-100',
         )
       }
     >
       {({ isActive }) => (
         <>
-          {/* The active mark is a printed pointer, not a highlight. A filled block
-              on the rail would be a second dark mass inside the only dark mass. */}
-          <span aria-hidden="true" className={isActive ? 'text-brand-600' : 'text-transparent'}>
-            &gt;
+          {/* The lit edge. A 2px bar on the leading side of the switch, which is
+              where a cluster puts the indication for a selected channel — and it
+              is the only thing in the housing that is allowed to glow. */}
+          <span
+            aria-hidden="true"
+            className={cn(
+              'absolute inset-y-1 left-0 w-0.5 rounded-full transition-colors duration-100',
+              isActive ? 'bg-volt-400 lume' : 'bg-transparent',
+            )}
+          />
+          <span className={cn(DATA, isActive ? 'text-volt-400' : 'text-lume-600/70')}>
+            {String(index).padStart(2, '0')}
           </span>
           {children}
         </>
@@ -141,7 +190,11 @@ function SignOut({ onSignOut }) {
         signOut()
         onSignOut()
       }}
-      className={cn(MICRO, 'text-news-100/50 transition-colors hover:text-brand-600')}
+      className={cn(
+        LEGEND,
+        'text-lume-600 transition-colors hover:text-brand-400',
+        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-volt-400',
+      )}
     >
       Sign out
     </button>
@@ -149,59 +202,71 @@ function SignOut({ onSignOut }) {
 }
 
 /**
- * The honest notice, and the one place the hazard rule is used.
+ * The honest notice, and the one standing fault the cluster reports.
  *
  * Not dismissible for as long as the local adapter is what answers. Somebody
- * spending an afternoon writing three model pages needs to know before they start
- * that the work is in this browser and not on the site — a notice they closed on
- * Tuesday cannot tell them that on Thursday.
+ * spending an afternoon writing three model pages needs to know before they
+ * start that the work is in this browser and not on the site — a notice they
+ * closed on Tuesday cannot tell them that on Thursday.
  */
 function LocalNotice() {
   return (
-    <div>
-      <Rule hazard />
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 bg-news-200 px-4 py-2.5 sm:px-8">
-        <Tag tone="warn">Local data</Tag>
-        <p className="text-[12.5px] leading-snug text-ink-950/75">
-          Edits save to this browser only. They do not reach the live site, and another device will not see them.
-        </p>
-        <span className={cn(MICRO, 'text-ink-950/40')}>
-          src/admin/backend/index.js
-        </span>
-      </div>
-      <Rule />
+    <div
+      role="status"
+      className={cn(
+        'flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b bg-brand-900/20 px-4 py-2.5 sm:px-8',
+        'border-b-brand-500/40',
+      )}
+    >
+      <span className={cn(LEGEND, 'flex items-center gap-2 text-brand-400')}>
+        <Lamp alarm />
+        Local data
+      </span>
+      <p className={cn(PROSE, 'text-lume-400')}>
+        Edits save to this browser only. They do not reach the live site, and another device will
+        not see them.
+      </p>
+      <span className={cn(LEGEND, 'text-lume-600')}>src/admin/data/index.js</span>
     </div>
   )
 }
 
 /**
- * A screen's heading block: the one macro element on any page.
+ * A screen's heading block: the one gauge-scale element on any page.
  *
- * The eyebrow and the count are `MICRO` against a title set at up to 4rem, and
- * that gap is the page's entire hierarchy. Nothing between the two registers.
+ * The eyebrow and the count are `LEGEND` against a title set at up to 3.4rem,
+ * and that gap is the page's entire hierarchy. The tick rail underneath closes
+ * the block — it is the graduation the title is standing on, and it is what
+ * makes the head read as the top of an instrument rather than as an `h1` with a
+ * border-bottom.
  */
 export function PageHead({ eyebrow, title, count, children }) {
   return (
-    <header className="mb-6">
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <div className="min-w-0">
-          {eyebrow && <div className={cn(MICRO, 'mb-2.5 text-ink-950/45')}>{eyebrow}</div>}
-          <h1 className={cn(MACRO, 'flex items-baseline gap-4 text-[clamp(1.9rem,5vw,3.4rem)]')}>
+    <header className="mb-7">
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+        <div className="animate-power-on min-w-0">
+          {eyebrow && <div className={cn(LEGEND, 'mb-3 text-lume-600')}>{eyebrow}</div>}
+          <h1 className={cn(GAUGE, 'flex items-baseline gap-4 text-[clamp(2rem,5vw,3.4rem)]')}>
             <span className="min-w-0 break-words">{title}</span>
             {count != null && (
-              <data className={cn('font-mono text-[0.4em] tabular-nums tracking-normal text-brand-600')}>
+              <data className={cn(DATA, 'text-[0.38em] font-normal tracking-normal text-volt-400')}>
                 {String(count).padStart(3, '0')}
               </data>
             )}
           </h1>
         </div>
 
-        {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
+        {children && (
+          <div
+            className="animate-power-on flex flex-wrap items-center gap-2"
+            style={{ animationDelay: '80ms' }}
+          >
+            {children}
+          </div>
+        )}
       </div>
 
-      <div className="mt-4">
-        <Rule />
-      </div>
+      <TickRail sweep delay={140} className="mt-5" />
     </header>
   )
 }

@@ -1,35 +1,30 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/utils/cn'
-import { signIn } from './backend/session'
-import { Action, Barcode, Crosshair, DATA, EDGE, Field, MACRO, MICRO, TextInput } from './ui'
+import { signIn } from './data/session'
+import { Action, DATA, EDGE, Field, GAUGE, Lamp, LEGEND, PROSE, TextInput, TickRail } from './ui'
 
 /**
- * The sign-in sheet.
+ * The sign-in screen: the cluster before the power is on.
  *
- * A single left-aligned column between two rails, rather than a centred stack
- * floating in the middle of an empty sheet.
+ * This is the one screen in the admin that is not yet an instrument — nothing is
+ * lit, no channel is selected, no data has been read. So it is staged as the
+ * moment before ignition: the housing is there, the legend is printed on it, one
+ * lamp is blinking on standby, and the single volt element on the whole screen is
+ * the field that will start it.
  *
- * The centred version put a centred headline over a left-aligned form, which is
- * two axes arguing, and left the top and bottom thirds of the viewport as blank
- * paper. The fix is not to re-introduce the asymmetric two-column composition —
- * that genuinely did push the only interactive element off to one side — but to
- * *frame* the column: a masthead rail at the top, a hazard rule and colophon at
- * the bottom, and a margin stripe down the left on wide screens. The sheet now
- * reads as a page of a document with one form on it, and every edge of the
- * viewport is registered.
- *
- * The plate keeps the two-word break but sets flush left against the form's own
- * left edge, so headline, rule, label, input and button all hang from one line.
- * `REQUIRED` gets the hazard slab behind it — the one place this screen spends
- * colour, and it prints itself left-to-right on load so the page has a single
- * entrance rather than a scatter of them.
+ * The composition is a centred bay under a masthead rail, with the tick scale
+ * running the full width above and below. Centred here and left-aligned
+ * everywhere else in the admin on purpose: every other screen is a working
+ * surface with a rail down its side, and this one has neither. Its type centres
+ * with the bay; the form's own contents do not — a label centred over its own
+ * input is a poster rather than a form.
  *
  * Built as a real credential form even though what is behind it is one password
  * compared in the browser: labelled password field, a reveal toggle, a caps-lock
  * warning, a submit that reports its own progress, and an error that names what
- * went wrong and nudges the frame. Swapping in Supabase or an API changes the
- * call inside `handleSubmit` and nothing else.
+ * went wrong and nudges the bay. Swapping in Supabase or an API changes the call
+ * inside `handleSubmit` and nothing else.
  */
 export default function Login({ onSignedIn }) {
   const [password, setPassword] = useState('')
@@ -60,10 +55,17 @@ export default function Login({ onSignedIn }) {
   }
 
   return (
-    <div className="halftone relative min-h-dvh overflow-hidden bg-news-100 font-body text-ink-950">
+    <div className="relative min-h-dvh overflow-hidden bg-rig-990 font-body text-lume-100">
+      {/* Standby backlight: dimmer than the Shell's and thrown from below rather
+          than above, so the housing reads as lit from a source that is not yet
+          the instrument itself. */}
       <div
         aria-hidden="true"
-        className="grain pointer-events-none fixed inset-0 opacity-[0.35] mix-blend-multiply"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(90% 55% at 50% 108%, oklch(26% 0.02 255) 0%, transparent 62%)',
+        }}
       />
 
       <div className="relative flex min-h-dvh flex-col">
@@ -79,112 +81,93 @@ export default function Login({ onSignedIn }) {
             a glance from inside a working session. */}
         <header
           className={cn(
-            MICRO,
-            'flex items-center justify-between gap-4 border-b bg-news-200 px-4 py-3 sm:px-8',
+            LEGEND,
+            'flex items-center justify-between gap-4 border-b bg-rig-950/80 px-4 py-3.5 sm:px-8',
             EDGE,
           )}
         >
-          <span className="flex items-center gap-3 text-ink-950">
-            <span aria-hidden="true" className="text-ink-950/40">
-              [{' '}
-            </span>
-            Revolt / Control
-            <span aria-hidden="true" className="text-ink-950/40">
-              {' '}]
-            </span>
-            <Barcode className="hidden w-16 sm:block" />
+          <span className="flex items-center gap-3 text-lume-100">
+            <Lamp />
+            Revolt / Cluster
           </span>
 
           <span className="flex items-center gap-4 sm:gap-6">
             <Link
               to="/"
               className={cn(
-                'flex items-center gap-2 px-1 py-1 text-ink-950/70',
-                'transition-colors duration-100 hover:bg-ink-950 hover:text-news-100',
-                'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600',
+                'flex items-center gap-2 rounded-[2px] px-1.5 py-1 text-lume-600',
+                'transition-colors duration-100 hover:text-lume-100',
+                'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-volt-400',
               )}
             >
-              <span aria-hidden="true">&lt;&lt;&lt;</span>
+              <span aria-hidden="true">◂</span>
               Back to site
             </Link>
 
-            <span className="hidden items-center gap-2 text-ink-950/55 sm:flex">
-              <span aria-hidden="true" className="animate-blink size-1.5 bg-brand-600" />
+            <span className="hidden items-center gap-2 text-lume-600 sm:flex">
+              <Lamp alarm />
               Session — none
             </span>
           </span>
         </header>
 
-        {/* ── The sheet ───────────────────────────────────────────────────────
-            The margin stripe only exists where there is margin to spend, so it
+        <TickRail className="opacity-50" />
+
+        {/* ── The bay ─────────────────────────────────────────────────────────
+            The margin legend only exists where there is margin to spend, so it
             is a `lg` affair: rotated identification down the left edge, the way
-            a bound document carries its title on the spine. */}
+            a housing carries its part number on the flank. */}
         <main className="relative flex flex-1 items-center justify-center px-4 py-14 sm:px-8">
           <div
             aria-hidden="true"
             className={cn(
-              MICRO,
-              'absolute inset-y-8 left-8 hidden items-center border-l border-ink-950/25 pl-3 lg:flex',
+              LEGEND,
+              'absolute inset-y-10 left-8 hidden items-center border-l border-rig-700 pl-3.5 lg:flex',
             )}
           >
-            <span className="whitespace-nowrap text-ink-950/35 [writing-mode:vertical-rl]">
+            <span className="whitespace-nowrap text-lume-600 [writing-mode:vertical-rl]">
               Authorised personnel only — no public route reaches this screen
             </span>
           </div>
 
-          {/* Centred on both axes of the sheet. The type centres with it; the
-              form's own contents do not — a label centred over its own input is
-              a poster rather than a form. */}
           <div className="mx-auto w-full max-w-[27rem] text-center">
-            <h1
-              className={cn(
-                MACRO,
-                'animate-rise text-[clamp(3rem,11vw,4.75rem)]',
-              )}
-            >
-              Access
-              <br />
-              <span className="relative inline-block px-[0.12em]">
-                <span
-                  aria-hidden="true"
-                  className="animate-sweep absolute inset-0 origin-left bg-brand-600"
-                  style={{ animationDelay: '340ms' }}
-                />
-                <span className="relative text-news-100 mix-blend-normal">required</span>
-              </span>
-            </h1>
+            <div className="animate-power-on">
+              <span className={cn(LEGEND, 'block text-lume-600')}>Ignition</span>
+              <h1
+                className={cn(
+                  GAUGE,
+                  'mt-4 text-[clamp(2.75rem,10vw,4.25rem)] font-extrabold',
+                )}
+              >
+                Access
+                <br />
+                <span className="text-volt-400">required</span>
+              </h1>
+            </div>
 
             <p
-              className="animate-rise mx-auto mt-6 max-w-[42ch] text-[13.5px] leading-relaxed text-ink-950/60"
+              className={cn(PROSE, 'animate-power-on mx-auto mt-5 max-w-[42ch] text-lume-600')}
               style={{ animationDelay: '90ms' }}
             >
-              The lineup and the journal are edited from here. Records are the site&rsquo;s own —
-              a change to a model page is a change to what a customer reads.
+              The lineup and the journal are edited from here. Records are the site&rsquo;s own — a
+              change to a model page is a change to what a customer reads.
             </p>
 
-            {/* The frame is the form's only container; the crosshairs register
-                it against the sheet.
-
-                Two elements rather than one because the entrance and the
-                wrong-password nudge are both animations, and an element can
-                only run one: the wrapper rises on load, the frame inside it
-                shakes. Toggling the class off on `animationend` is what lets a
-                second wrong password replay it. */}
-            <div className="animate-rise mt-9" style={{ animationDelay: '180ms' }}>
+            {/* Two elements rather than one because the entrance and the
+                wrong-password nudge are both animations, and an element can only
+                run one: the wrapper powers on, the bay inside it shakes.
+                Toggling the class off on `animationend` is what lets a second
+                wrong password replay it. */}
+            <div className="animate-power-on mt-9" style={{ animationDelay: '180ms' }}>
               <form
                 onSubmit={handleSubmit}
                 onAnimationEnd={() => setNudge(false)}
                 className={cn(
-                  'relative border bg-news-100 p-5 text-left sm:p-6',
+                  'knurl relative rounded-[3px] border bg-rig-950 p-5 text-left bezel sm:p-6',
                   nudge && 'animate-shake',
                   EDGE,
                 )}
               >
-                <Crosshair className="left-0 top-0 -translate-x-1/2 -translate-y-1/2" />
-                <Crosshair className="right-0 top-0 translate-x-1/2 -translate-y-1/2" />
-                <Crosshair className="bottom-0 left-0 -translate-x-1/2 translate-y-1/2" />
-                <Crosshair className="bottom-0 right-0 translate-x-1/2 translate-y-1/2" />
-
                 <Field label="Password" error={error} htmlFor="admin-password" required>
                   <div className="relative">
                     <TextInput
@@ -196,7 +179,7 @@ export default function Login({ onSignedIn }) {
                       value={password}
                       invalid={Boolean(error)}
                       placeholder="••••••••"
-                      className={cn(MICRO, 'h-12 pr-20 text-[13px] tracking-[0.3em]')}
+                      className={cn(DATA, 'h-12 pr-20 text-[14px] tracking-[0.3em]')}
                       onKeyUp={(event) => setCaps(event.getModifierState('CapsLock'))}
                       onChange={(event) => {
                         setPassword(event.target.value)
@@ -205,16 +188,16 @@ export default function Login({ onSignedIn }) {
                     />
 
                     {/* Inside the field rather than under it: it acts on the
-                        field, so it belongs on the same rule. */}
+                        field, so it belongs within the same well. */}
                     <button
                       type="button"
                       onClick={() => setReveal((shown) => !shown)}
                       aria-pressed={reveal}
                       className={cn(
-                        MICRO,
-                        'absolute inset-y-px right-px px-3 text-ink-950/50',
-                        'transition-colors duration-100 hover:bg-ink-950 hover:text-news-100',
-                        'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand-600',
+                        LEGEND,
+                        'absolute inset-y-px right-px rounded-r-[2px] px-3.5 text-lume-600',
+                        'transition-colors duration-100 hover:text-lume-100',
+                        'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-volt-400',
                       )}
                     >
                       {reveal ? 'Hide' : 'Show'}
@@ -223,8 +206,8 @@ export default function Login({ onSignedIn }) {
                 </Field>
 
                 {caps && (
-                  <p className={cn(MICRO, 'mt-2 text-ink-950/60')}>
-                    <span aria-hidden="true">/// </span>
+                  <p className={cn(LEGEND, 'mt-2.5 flex items-center gap-2 text-lume-400')}>
+                    <Lamp />
                     Caps lock is on
                   </p>
                 )}
@@ -232,7 +215,7 @@ export default function Login({ onSignedIn }) {
                 <Action
                   type="submit"
                   variant="primary"
-                  chevrons={!busy}
+                  arrow={!busy}
                   disabled={busy || !password.trim()}
                   className="mt-5 h-12 w-full"
                 >
@@ -244,15 +227,15 @@ export default function Login({ onSignedIn }) {
         </main>
 
         {/* ── Colophon ────────────────────────────────────────────────────────
-            The hazard rule marks the bottom edge of the document; the line under
-            it is the build stamp a printed manual carries in the same place. */}
+            The tick scale closes the screen the way it opened it, and the line
+            under it is the build stamp a housing carries moulded into its back. */}
         <footer>
-          <hr aria-hidden="true" className="hazard h-1 border-0" />
+          <TickRail className="rotate-180 opacity-50" />
           <div
             className={cn(
-              MICRO,
+              LEGEND,
               DATA,
-              'flex items-center justify-between gap-4 px-4 py-3 text-ink-950/45 sm:px-8',
+              'flex items-center justify-between gap-4 px-4 py-3.5 text-lume-600 sm:px-8',
             )}
           >
             <span>Rev-CTL / 01</span>

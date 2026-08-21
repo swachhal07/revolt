@@ -12,12 +12,19 @@
  * exactly that gap: upload returns a URL, the URL goes in the record, the site
  * renders it like any other.
  *
- * ── Wiring Cloudinary ────────────────────────────────────────────────────────
- * Use an **unsigned** upload preset. A signed upload needs the API secret to
- * build the signature, and a secret in a static frontend is public — anything in
- * `VITE_*` is inlined into the bundle at build time. An unsigned preset is
- * designed for this: it is scoped to one folder, can be rate-limited, and
- * carries no secret. Set both of these in `.env`:
+ * ── Two routes to Cloudinary ─────────────────────────────────────────────────
+ * With the API fitted (`VITE_ADMIN_BACKEND=http`) the file goes to the service,
+ * which holds the API secret and signs the upload itself. That is the better
+ * path and the one to use: the upload is authenticated, so it is available to
+ * whoever is signed in and to nobody else.
+ *
+ * Without it, the browser uploads directly using an **unsigned** preset. A
+ * signed upload needs the API secret to build the signature, and a secret in a
+ * static frontend is public — anything in `VITE_*` is inlined into the bundle at
+ * build time. An unsigned preset is designed for this case: scoped to one
+ * folder, rate-limitable, and carrying no secret. It is also open to anyone who
+ * reads the bundle and finds the preset name, which is exactly why the service
+ * takes over the moment there is one.
  *
  *   VITE_CLOUDINARY_CLOUD_NAME=your-cloud
  *   VITE_CLOUDINARY_UPLOAD_PRESET=revolt-admin
@@ -27,15 +34,22 @@
  * here. A limit enforced in the browser is a courtesy; a limit enforced on the
  * preset is the actual limit.
  *
- * Nothing else in the admin changes. `uploadImage` is the only function that
- * knows Cloudinary exists.
+ * Nothing else in the admin changes either way. `uploadImage` is the only
+ * function that knows how an image gets uploaded.
  */
 
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
 const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
 
-/** Is uploading available, or should the editor ask for a URL instead? */
-export const canUpload = Boolean(CLOUD_NAME && UPLOAD_PRESET)
+const USE_API = (import.meta.env.VITE_ADMIN_BACKEND ?? 'local') === 'http'
+
+/**
+ * Is uploading available, or should the editor ask for a URL instead?
+ *
+ * The service does not need the preset variables at all — it has the real
+ * credentials — so with the API fitted this is simply true.
+ */
+export const canUpload = USE_API || Boolean(CLOUD_NAME && UPLOAD_PRESET)
 
 // Refused before the request rather than after. An 11MB phone photograph is a
 // slow upload that fails at the far end, and finding that out locally is faster
@@ -58,6 +72,9 @@ export async function uploadImage(file) {
     )
   }
 
+  // Checked before either route. The type and size rules are the same wherever
+  // the file is going, and finding out locally is faster and cheaper than
+  // finding out at the far end of a slow upload.
   if (!ACCEPTED.includes(file.type)) {
     throw new Error(`${file.type || 'That file'} is not an image the site can use. JPEG, PNG, WebP or AVIF.`)
   }
@@ -66,6 +83,13 @@ export async function uploadImage(file) {
     throw new Error(
       `That file is ${(file.size / 1024 / 1024).toFixed(1)}MB. The limit is ${MAX_BYTES / 1024 / 1024}MB — export it smaller first.`,
     )
+  }
+
+  if (USE_API) {
+    // Lazy, for the same reason `session.js` does it: a static import would pull
+    // the adapter's `VITE_API_URL` assertion into a bundle that has no API.
+    const { uploadImage: viaApi } = await import('./httpAdapter')
+    return viaApi(file)
   }
 
   const body = new FormData()

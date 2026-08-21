@@ -1,0 +1,35 @@
+# Render blueprint. Point Render at this file, or create the service by hand
+# with the same settings.
+#
+# `rootDir` matters: the repo holds the frontend at its root and this service in
+# a subfolder, so the build and start commands run from `backend/` rather than
+# from the repository root.
+services:
+  - type: web
+    name: revolt-api
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Everything below is secret or deployment-specific and is set in the
+      # dashboard rather than committed. `sync: false` is what tells Render to
+      # prompt for them instead of expecting a value here.
+      - key: CORS_ORIGINS
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_FOLDER
+        value: revolt

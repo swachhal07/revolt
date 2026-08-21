@@ -1,13 +1,14 @@
 // The people who run the operation, in two tiers: the board that signs for the
 // group, and the management team that runs the distributorship day to day.
 //
-// WHAT IS REAL AND WHAT IS NOT — the four board names and their titles are
-// real. Everything else is drafted: the management team's names and titles are
-// stand-ins, and no `remit` line on this page has been approved by the person
-// it is printed under. The board's portraits are supplied; the management
+// WHAT IS REAL AND WHAT IS NOT — every name and title on both tiers is real.
+// The management tier is deliberately short: only the two confirmed people are
+// listed, and the rest of the team goes in from the admin once that section
+// exists. No `remit` has been approved by the person it would be printed
+// under, so none is set. The board's portraits are supplied; the management
 // team's are still `null`.
 //
-// Only the management tier carries a `remit`. The board is listed by title.
+// Only the management tier can carry a `remit`. The board is listed by title.
 //
 // `remit` is deliberately what the person is answerable for rather than a
 // biography. A leadership page that lists degrees answers a question nobody
@@ -59,61 +60,28 @@ export const BOARD = [
   },
 ]
 
-/** The desk-level team. This is who a customer actually reaches. */
+/**
+ * The desk-level team. This is who a customer actually reaches.
+ *
+ * Two entries for now — the real ones. The rest of the team is to be added from
+ * the admin once the section for it is built, so this array is the shape that
+ * feed has to produce: `slug`, `name`, `role`, `photo`, and optionally `remit`
+ * and `since`. Both optional fields are omitted here rather than filled with a
+ * guess; the row drops the line it has no value for and the band still sets
+ * flat. Nothing on the page reads the length as a fixed number.
+ */
 export const MANAGEMENT = [
   {
-    slug: 'managing-director',
-    name: 'Nirajan Dugar',
-    role: 'Managing Director',
-    since: '2023',
+    slug: 'nidhi',
+    name: 'Nidhi',
+    role: 'Deputy Business Head',
     photo: null,
-    remit:
-      'Runs the operation against what the board committed to. Every escalation that leaves the showroom stops here.',
   },
   {
-    slug: 'service',
-    name: 'Bibek Shrestha',
-    role: 'Head of Service',
-    since: '2023',
+    slug: 'saugat',
+    name: 'Saugat',
+    role: 'Sales Manager',
     photo: null,
-    remit:
-      'Owns the workshop and the diagnostic bench. Every warranty call and every battery log that comes back reading wrong ends on this desk.',
-  },
-  {
-    slug: 'parts',
-    name: 'Anisha Gurung',
-    role: 'Parts & Supply Chain',
-    since: '2023',
-    photo: null,
-    remit:
-      'Decides what sits on the shelf before anyone asks for it. Controllers, chargers, harnesses — the parts that decide a week from a month.',
-  },
-  {
-    slug: 'sales',
-    name: 'Prakash Adhikari',
-    role: 'Sales & Showroom',
-    since: '2024',
-    photo: null,
-    remit:
-      'Runs the floor and the test-ride book. Answerable for the bike a rider is put on being the one that suits the road they actually ride.',
-  },
-  {
-    slug: 'workshop',
-    name: 'Ramesh Tamang',
-    role: 'Workshop Lead Technician',
-    since: '2023',
-    photo: null,
-    remit:
-      'Factory-trained on the platform. The last person to touch a bike before it is handed back, and the one who signs that it is right.',
-  },
-  {
-    slug: 'support',
-    name: 'Sneha Maharjan',
-    role: 'Customer Support',
-    since: '2024',
-    photo: null,
-    remit:
-      'The number on the contact page rings at this desk. Tracks every open case to a closed one and reports the ones that took too long.',
   },
 ]
 

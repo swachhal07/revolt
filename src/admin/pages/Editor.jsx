@@ -1,20 +1,34 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { cn } from '@/utils/cn'
-import { backend } from '../backend'
-import { blankRecord, COLLECTIONS, validate } from '../backend/schema'
+import { backend } from '../data'
+import { blankRecord, COLLECTIONS, fieldGroups, validate } from '../data/schema'
 import { FieldControl } from '../fields'
 import { PageHead } from '../Shell'
-import { Action, CELL, EDGE, MICRO, Rule, SHEET, State, Tag, Zone, ZoneHead } from '../ui'
+import {
+  Action,
+  DATA,
+  EDGE,
+  Lamp,
+  LEGEND,
+  PROSE,
+  Panel,
+  PanelFoot,
+  PanelHead,
+  State,
+  Tag,
+  VOID,
+} from '../ui'
 
 /**
- * The editor for any record in any collection. One screen, driven by the schema's
- * `fields`.
+ * The editor for any record in any collection. One screen, driven by the
+ * schema's `fields`.
  *
- * Every field is its own compartment on the hairline grid rather than a control
- * floating in whitespace — a half-width field is one cell, a full-width one spans
- * both, and the rules between them are the gaps in the grid. That is what makes a
- * twenty-field form read as a printed schedule instead of a scroll.
+ * Every field is its own bay on the hairline grid rather than a control floating
+ * in whitespace — a half-width field is one bay, a full-width one spans both,
+ * and the rules between them are the gaps in the grid showing the void through.
+ * That is what makes a twenty-field form read as a wiring schedule instead of a
+ * scroll.
  *
  * Two behaviours matter more than the layout:
  *
@@ -33,7 +47,17 @@ export default function Editor() {
   const schema = COLLECTIONS[collection]
   const isNew = id === 'new'
 
-  const [record, setRecord] = useState(null)
+  // A new record is blank from the very first render, not from the effect that
+  // used to fill it. Deriving it in an effect left one render where `record` was
+  // null while `loading` was already false — nothing rendered a loading state,
+  // so the body ran and dereferenced null, and every "New …" button in the tool
+  // opened a blank screen. An existing record survived only because `loading`
+  // starts true for it and holds the body back until the adapter answers.
+  //
+  // Lazy, so `blankRecord` is not rebuilt on every render, and guarded on the
+  // schema so an unknown collection reaches its own error state below instead of
+  // throwing in here first.
+  const [record, setRecord] = useState(() => (isNew && schema ? blankRecord(collection) : null))
   const [loading, setLoading] = useState(!isNew)
   const [loadError, setLoadError] = useState(null)
   const [errors, setErrors] = useState({})
@@ -70,10 +94,9 @@ export default function Editor() {
   useEffect(() => {
     if (!schema) return
 
-    if (isNew) {
-      setRecord(blankRecord(collection))
-      return
-    }
+    // Nothing to fetch for a new record — the initial state already holds a
+    // blank one.
+    if (isNew) return
 
     let live = true
     setLoading(true)
@@ -169,12 +192,20 @@ export default function Editor() {
   }
 
   const leave = () => {
-    if (dirty && !window.confirm('Leave without saving? The changes on this sheet will be lost.')) return
+    if (dirty && !window.confirm('Leave without saving? The changes on this sheet will be lost.')) {
+      return
+    }
     navigate(`/admin/${collection}`)
   }
 
   if (!schema) {
-    return <State kind="error" title="No such collection" detail={`Nothing is registered under “${collection}”.`} />
+    return (
+      <State
+        kind="error"
+        title="No such collection"
+        detail={`Nothing is registered under “${collection}”.`}
+      />
+    )
   }
 
   if (loading) return <State kind="loading" title="Reading" />
@@ -182,20 +213,41 @@ export default function Editor() {
   if (loadError) {
     return (
       <State kind="error" title="Could not open" detail={loadError}>
-        <Link to={`/admin/${collection}`} className={cn(MICRO, 'border px-3 py-2', EDGE)}>
+        <Link
+          to={`/admin/${collection}`}
+          className={cn(
+            LEGEND,
+            'rounded-[2px] border bg-rig-900 px-3 py-2.5 text-lume-100 bezel',
+            'transition-colors hover:border-lume-600',
+            EDGE,
+          )}
+        >
           Back to {schema.label}
         </Link>
       </State>
     )
   }
 
+  // Last, and after the error state so a failed read still reports itself: the
+  // body cannot run without a record, and it says so here rather than relying on
+  // some other flag happening to be true at the right moment.
+  if (!record) return <State kind="loading" title="Reading" />
+
   const commitLabel = isNew ? `Create ${schema.singular}` : 'Save'
+  const sections = fieldGroups(collection)
 
   return (
     <>
       <PageHead
         eyebrow={
-          <button type="button" onClick={leave} className="underline decoration-ink-950/30 underline-offset-4">
+          <button
+            type="button"
+            onClick={leave}
+            className={cn(
+              'underline decoration-rig-700 underline-offset-4 transition-colors hover:text-lume-100',
+              'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-volt-400',
+            )}
+          >
             ← {schema.label}
           </button>
         }
@@ -203,61 +255,99 @@ export default function Editor() {
       >
         {dirty && <Tag tone="warn">Unsaved</Tag>}
         {!dirty && saved && <Tag tone="live">Saved</Tag>}
-        <Action variant="primary" chevrons={!saving} onClick={save} disabled={saving}>
+        <Action variant="primary" arrow={!saving} onClick={save} disabled={saving}>
           {saving ? 'Saving' : commitLabel}
         </Action>
       </PageHead>
 
       {saveError && (
-        <div role="alert" className={cn('mb-5 border', EDGE)}>
-          <Rule hazard />
-          <div className="px-3 py-3">
-            <p className={cn(MICRO, 'text-brand-600')}>
-              <span aria-hidden="true">/// </span>Not saved
-            </p>
-            <p className="mt-1.5 text-[12.5px] text-ink-950/75">{saveError}</p>
-          </div>
+        <div
+          role="alert"
+          className="mb-6 rounded-[2px] border border-brand-500/60 bg-brand-900/20 px-3.5 py-3"
+        >
+          <p className={cn(LEGEND, 'flex items-center gap-2 text-brand-400')}>
+            <Lamp alarm />
+            Not saved
+          </p>
+          <p className={cn(PROSE, 'mt-2 text-lume-400')}>{saveError}</p>
         </div>
       )}
 
-      <Zone>
-        <ZoneHead label={schema.singular} unit={isNew ? 'New record' : record[schema.idField]} />
+      {/* `sheet` is the whole light-surface switch: it re-points the palette for
+          everything below it, so the form is white paper while the rail, the
+          page head and the commit buttons above stay part of the dark rig. */}
+      <Panel className="sheet animate-power-on" style={{ animationDelay: '120ms' }}>
+        <PanelHead
+          label={schema.singular}
+          alarm={Object.values(errors).some(Boolean)}
+          unit={isNew ? 'New record' : record[schema.idField]}
+        />
 
-        {/* The compartment grid. Cells are paper on carbon, so the rules between
-            fields are the gaps — no borders, and no doubled edge anywhere the two
-            columns meet. */}
-        <div className={cn('grid gap-px sm:grid-cols-2', SHEET)}>
-          {schema.fields.map((field) => (
-            // The anchor `save` scrolls to. On the compartment rather than the
-            // input, so the label and its help come into view with it.
-            <div
-              key={field.name}
-              id={`field-${field.name}`}
-              className={cn(CELL, 'p-3', field.width === 'half' ? 'sm:col-span-1' : 'sm:col-span-2')}
-            >
-              <FieldControl
-                field={field}
-                value={record[field.name]}
-                onChange={(value) => set(field.name, value)}
-                error={errors[field.name]}
-                record={record}
-              />
+        {sections.map((section, position) => (
+          <section key={section.label ?? position}>
+            {/* The section rule. A twenty-field form with no divisions is a wall
+                you read in order and cannot re-enter — every visit starts at the
+                top. Named groups give it a table of contents you can navigate by
+                shape rather than by reading, and they are what turn "where is the
+                price" into a glance instead of a scan. */}
+            {section.label && (
+              <h3
+                className={cn(
+                  LEGEND,
+                  'flex items-center gap-2.5 border-y bg-rig-900 px-3.5 py-2.5 text-lume-400',
+                  // No top rule on the first one: the panel header is already
+                  // the line above it, and two rules 1px apart is a mistake.
+                  position === 0 && 'border-t-0',
+                  EDGE,
+                )}
+              >
+                <span className={cn(DATA, 'text-lume-600')}>
+                  {String(position + 1).padStart(2, '0')}
+                </span>
+                {section.label}
+              </h3>
+            )}
+
+            {/* The bay grid. Cells are sheet faces on the ground, so the rules
+                between fields are the gaps — no borders, and no doubled edge
+                anywhere the two columns meet. */}
+            <div className={cn('grid gap-px sm:grid-cols-2', VOID)}>
+              {section.fields.map((field) => (
+                // The anchor `save` scrolls to. On the bay rather than the
+                // input, so the label and its help come into view with it.
+                <div
+                  key={field.name}
+                  id={`field-${field.name}`}
+                  className={cn(
+                    'bg-rig-950 p-3.5',
+                    field.width === 'half' ? 'sm:col-span-1' : 'sm:col-span-2',
+                  )}
+                >
+                  <FieldControl
+                    field={field}
+                    value={record[field.name]}
+                    onChange={(value) => set(field.name, value)}
+                    error={errors[field.name]}
+                    record={record}
+                  />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </section>
+        ))}
 
-        {/* The commit repeated at the foot. This form is longer than a viewport and
-            the writer finishes at the end of it — sending them back to the top to
-            commit is a scroll for nothing. */}
-        <div className={cn('flex flex-wrap items-center justify-between gap-3 border-t bg-news-200 px-3 py-2.5', EDGE)}>
+        {/* The commit repeated at the foot. This form is longer than a viewport
+            and the writer finishes at the end of it — sending them back to the
+            top to commit is a scroll for nothing. */}
+        <PanelFoot>
           <Action variant="bare" onClick={leave}>
             Discard
           </Action>
-          <Action variant="primary" chevrons={!saving} onClick={save} disabled={saving}>
+          <Action variant="primary" arrow={!saving} onClick={save} disabled={saving}>
             {saving ? 'Saving' : commitLabel}
           </Action>
-        </div>
-      </Zone>
+        </PanelFoot>
+      </Panel>
     </>
   )
 }

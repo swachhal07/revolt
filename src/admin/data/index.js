@@ -1,3 +1,4 @@
+import { httpAdapter } from './httpAdapter'
 import { localAdapter } from './localAdapter'
 import { assertPort } from './port'
 
@@ -8,14 +9,16 @@ import { assertPort } from './port'
  * backend is an entry in this map plus a `.env` line — no screen imports an
  * adapter directly, and none of them can tell which one they are talking to.
  *
- *   VITE_ADMIN_BACKEND=local   (default)
+ *   VITE_ADMIN_BACKEND=local   (default) — records in this browser's storage
+ *   VITE_ADMIN_BACKEND=http              — the Node service in `backend/`,
+ *                                          which also needs VITE_API_URL
  *
- * When the real one arrives, add it to `ADAPTERS` and set the variable. The
- * assertion below then fails at startup rather than mid-save if the new adapter
- * is missing a method.
+ * The assertion below fails at startup rather than mid-save if an adapter is
+ * missing a method.
  */
 const ADAPTERS = {
   local: localAdapter,
+  http: httpAdapter,
 }
 
 const NAME = import.meta.env.VITE_ADMIN_BACKEND ?? 'local'

@@ -81,26 +81,51 @@
      spends — 400 for metadata, 800 for the numerals. */
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* ── The admin's substrate ────────────────────────────────────────────────
-     Unbleached documentation paper, three steps. Not the same warm off-white as
-     `chalk-100`: that one is an ink colour, mixed to sit *on* near-black, and a
-     full screen of it is too light and too clean to read as stock. These are
-     matte, slightly grey, and the tool is built on them — 100 is the sheet, 200
-     is a recessed zone (table headers, footers), 300 is a filled control. */
-  --color-news-100: #f4f4f0;
-  --color-news-200: #eae8e3;
-  --color-news-300: #dcd8d1;
+  /* ── The admin's substrate: the instrument cluster ────────────────────────
+     The back office is the bike's own diagnostics rig, so it is built on the
+     material a cluster is moulded from rather than on a page. Five steps of a
+     cold graphite, all the same hue rotated toward blue — deliberately *not*
+     `ink-960`/`ink-940`, which are the launch gate's warm black. Two dark
+     surfaces on one site have to be told apart at a glance, and temperature is
+     what does it: the gate is a printed ground, this is machined plastic.
 
-  /* Macro typography for the admin, and the only place the site uses a third
-     family. Archivo Black is a single-weight heavy grotesque: flat-sided, tight
-     countered, and it forms solid blocks at the sizes this design sets headings
-     at. Plus Jakarta Sans at 800 is a humanist face — round where this needs
-     square — and Chakra Petch would make the back office look like the launch
-     gate, which is the one thing it must not do.
+     990 is the void the panels sit in. 950 is a panel face. 900 is a raised
+     header or a recessed well — it reads as either, because on a moulded
+     surface those are the same moulding seen from two sides. 850 fills a
+     control. 700 is the only hairline, and it is a bezel edge, not a rule. */
+  --color-rig-990: oklch(15% 0.013 255);
+  --color-rig-950: oklch(19.5% 0.014 255);
+  --color-rig-900: oklch(24% 0.014 255);
+  --color-rig-850: oklch(29% 0.014 255);
+  --color-rig-700: oklch(39% 0.013 255);
 
-     Never set a weight against it: 400 is all there is to load, and asking for
-     800 gets a browser-synthesised smear. */
-  --font-macro: "Archivo Black", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  /* Lume: the type printed on the cluster. Never pure white — a dial legend is
+     pigment catching backlight, and #fff on graphite reads as a hole. Three
+     ranks, and 600 still clears 4.5:1 on `rig-950`, so the quietest text in the
+     tool is quiet rather than unreadable. */
+  --color-lume-100: oklch(96% 0.005 255);
+  --color-lume-400: oklch(74% 0.010 255);
+  --color-lume-600: oklch(58% 0.012 255);
+
+  /* Gauge typography. Oxanium is a technical face with the squared bowls and
+     clipped terminals of dial lettering, and it holds at 6rem where Plus Jakarta
+     Sans goes soft. It replaces Archivo Black, which was right for a printed
+     manual and wrong for a backlit instrument — a heavy grotesque at this size
+     on graphite reads as a slab of ink, not as a numeral that is lit.
+
+     Not Chakra Petch: that is the launch gate's face, and the back office
+     borrowing it would collapse the distinction the palette just made. */
+  --font-gauge: "Oxanium", "Chakra Petch", ui-sans-serif, system-ui, sans-serif;
+
+  /* Instruments come up when the power does: a sweep, not a fade. `both` so the
+     element holds its start state through the stagger delay instead of flashing
+     at full strength on first paint. */
+  --animate-power-on: power-on 0.62s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  /* A gauge bar or a tick rail arriving. Long and heavily damped — a needle
+     settling, and the reason the overview reads as instrumentation rather than
+     as a dashboard with progress bars on it. */
+  --animate-needle: needle 1.05s cubic-bezier(0.16, 1, 0.3, 1) both;
 
   /* The only continuous animation on the site. Everything else is either a
      one-shot entrance or a hover state. */
@@ -132,6 +157,31 @@
 }
 
 @keyframes sweep {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* The admin's power-up. A short lift plus a fade, and nothing else: the panels
+   are already heavy objects and scaling or blurring them on entry would make the
+   cluster feel like it is assembling itself rather than lighting up. */
+@keyframes power-on {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.75rem, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* A needle sweeping its arc. `transform-origin: left` is set at the call site,
+   because the same keyframe drives both a gauge bar and a tick rail. */
+@keyframes needle {
   from {
     transform: scaleX(0);
   }
@@ -235,29 +285,108 @@
   }
 }
 
-/* ── The admin's two textures ───────────────────────────────────────────────
-   Both exist to keep a screen built from flat fills and hairlines from reading
-   as vector-perfect. A printed manual has tooth; a CSS rectangle does not.
+/* ── The admin's three surfaces ─────────────────────────────────────────────
+   A cluster is a moulded object under a backlight, and the three utilities here
+   are what separate that from a dark theme: an edge that catches light, a
+   texture in the plastic, and a glow that only lit things have.
 
-   Halftone is a dot matrix on the paper. Sub-pixel dots on purpose (0.5px in a
-   4px cell): at a full pixel it stops being tooth and becomes a visible polka
-   pattern that fights every line of type set over it. The alpha is low for the
-   same reason — at 0.2 the grid was legible as a grid, which reads as a screen
-   texture rather than as stock. */
-@utility halftone {
-  background-image: radial-gradient(rgba(5, 5, 5, 0.09) 0.5px, transparent 0.6px);
-  background-size: 4px 4px;
+   All three are drawn from variables rather than from literals so that `sheet`
+   below can re-light them. A light surface catches and throws light in the
+   opposite direction from a dark one — an inset shadow tuned for graphite is a
+   smear of dirt on paper — and hard-coding the alphas here would mean the
+   worksheet had to opt out of the surface system rather than restate it. */
+@layer base {
+  :root {
+    /* The lip: what the top edge catches, and what the bottom edge throws. */
+    --edge-catch: rgb(255 255 255 / 0.055);
+    --edge-throw: rgb(0 0 0 / 0.45);
+    /* The well, same pair inverted. */
+    --well-throw: rgb(0 0 0 / 0.35);
+    --well-catch: rgb(255 255 255 / 0.035);
+    /* The grain in the moulding. */
+    --knurl-ink: rgb(255 255 255 / 0.022);
+  }
 }
 
-/* The hazard stripe. Used as a rule, never as a fill behind content — at any
-   height above a few pixels it is unreadable to put type on, which is exactly
-   what it is for: marking an edge that matters rather than decorating a band. */
-@utility hazard {
+/* The bezel. Two shadows and no blur radius on either — a moulded lip is a hard
+   transition, and a soft drop shadow under a panel is the single fastest way to
+   make a dark UI read as a stack of floating cards. The top inset is the light
+   catch, the bottom outset is the shadow the lip throws on the void. */
+@utility bezel {
+  box-shadow:
+    inset 0 1px 0 var(--edge-catch),
+    0 1px 0 var(--edge-throw);
+}
+
+/* The inverse, for anything recessed into the panel: an input well, a table
+   header, the thumbnail plate. Same two edges, swapped. */
+@utility inset-well {
+  box-shadow:
+    inset 0 1px 2px var(--well-throw),
+    inset 0 -1px 0 var(--well-catch);
+}
+
+/* Moulding texture. A 3px diagonal at just under 3% — the same trick as the
+   gate's scanlines but angled and far weaker, because this is grain in plastic
+   rather than a raster on a tube. Anything stronger and the panels start to
+   look upholstered. */
+@utility knurl {
   background-image: repeating-linear-gradient(
     135deg,
-    var(--color-brand-600) 0 6px,
-    transparent 6px 12px
+    var(--knurl-ink) 0 1px,
+    transparent 1px 3px
   );
+}
+
+/* ── The worksheet ──────────────────────────────────────────────────────────
+   The record editor, and the one light surface in the admin: a white sheet
+   clipped into the dark rig. Every other screen is something you read — a gauge,
+   a register, a fault list — and this is the one you *write on*, sometimes for
+   an hour at a stretch. A twenty-field form of long-form prose set in pale type
+   on graphite is a worse writing surface than paper is, and no amount of
+   commitment to an idiom is worth losing that argument.
+
+   It stays part of the cluster because the housing around it does not change:
+   the rail, the page head, the fault banners and the commit buttons in the frame
+   are all still dark, and the sheet is mounted in them.
+
+   Implemented by re-pointing the palette rather than by writing a second set of
+   components. Every admin component paints with the `rig` and `lume` tokens, and
+   Tailwind compiles those to `var()` references, so redefining the eight of them
+   on one wrapper flips an entire subtree — inputs, repeaters, help text, table
+   headers and all — with no light-mode variant to keep in step anywhere.
+
+   `color` has to be restated: the Shell resolved `text-lume-100` against the
+   dark palette on its own root, and children inherit that computed colour, not
+   the variable. Without this line the sheet would be pale grey type on white. */
+@utility sheet {
+  --color-rig-990: oklch(88% 0.003 255);
+  --color-rig-950: oklch(100% 0 0);
+  --color-rig-900: oklch(97% 0.002 255);
+  --color-rig-850: oklch(93.5% 0.003 255);
+  --color-rig-700: oklch(84.5% 0.004 255);
+
+  --color-lume-100: oklch(24% 0.012 255);
+  --color-lume-400: oklch(44% 0.010 255);
+  --color-lume-600: oklch(55% 0.009 255);
+
+  --edge-catch: rgb(255 255 255 / 0.9);
+  --edge-throw: rgb(0 0 0 / 0.07);
+  --well-throw: rgb(0 0 0 / 0.06);
+  --well-catch: rgb(255 255 255 / 0.9);
+  --knurl-ink: rgb(0 0 0 / 0.016);
+
+  color: var(--color-lume-100);
+}
+
+/* Backlight. Applied to the volt accents only, and it is the whole reason the
+   accent reads as *lit* rather than as a green rectangle. Two stops: a tight
+   halo and a wide bloom, both under 40% — a cluster's legend bleeds a little
+   into the plastic around it, it does not floodlight the cabin. */
+@utility lume {
+  box-shadow:
+    0 0 0 1px rgb(155 242 24 / 0.22),
+    0 0 18px -4px rgb(155 242 24 / 0.38);
 }
 
 /* ── The network map's city labels ──────────────────────────────────────────
@@ -274,7 +403,7 @@
   border: 0;
   border-radius: 0;
   box-shadow: 0 8px 20px -12px rgba(5, 5, 5, 0.6);
-  color: var(--color-news-100);
+  color: var(--color-chalk-100);
   font-family: var(--font-display);
   font-size: 10px;
   font-weight: 700;
@@ -309,7 +438,7 @@
    arrives over a map already carrying fifteen solid chips it must not compete
    with. */
 .leaflet-tooltip.network-pin-label--point {
-  background: var(--color-news-100);
+  background: var(--color-chalk-100);
   box-shadow: 0 6px 16px -10px rgba(5, 5, 5, 0.5);
   color: var(--color-ink-900);
   font-size: 9px;

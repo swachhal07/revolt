@@ -10,8 +10,10 @@ import { cn } from '@/utils/cn'
  *
  * The two are set differently on purpose, because they answer different
  * questions. The board is who you are dealing with — four people, portraits, a
- * plate each. The management team is who you reach — six people, ruled rows,
- * and the thing worth reading is the remit rather than the face.
+ * plate each, on the paper. The management team is who you reach — a centred
+ * heading over panels on black, name at poster scale, and each panel prints to
+ * paper under the pointer. Both rosters are whatever length
+ * `data/leadership.js` says: every count and rule is read off the arrays.
  *
  * Portraits are not supplied yet. Rather than leave the board as a wall of grey
  * boxes or defer the band entirely, every plate renders a marked placeholder at
@@ -22,14 +24,15 @@ import { cn } from '@/utils/cn'
  *   1. Masthead — the rule-flanked label, the claim, one standfirst, and a
  *      ruled ledger on the bottom edge. About's masthead, set on this page.
  *   2. The board — four portrait plates on the paper, captioned below.
- *   3. The management team — six ruled rows on the tinted band.
+ *   3. The management team — a centred heading and panels on the black band.
  *   4. What that means — three ruled principles, numbered.
  *
  * No closing CTA. The page is a reference — who these people are — and the ask
  * is on every other page and in the footer of this one.
  *
- * DATA STATUS — the four board names and titles are real; the management names
- * are stand-ins and no remit line is approved. See `data/leadership.js`.
+ * DATA STATUS — every name and title on both tiers is real. The management
+ * roster is the two confirmed people; the rest goes in from the admin once that
+ * section exists. No remit is approved yet. See `data/leadership.js`.
  */
 
 const EASE = 'ease-[cubic-bezier(0.32,0.72,0,1)]'
@@ -103,9 +106,9 @@ export default function Leadership() {
               'mx-auto mt-8 max-w-[52ch] text-center text-[15.5px] leading-relaxed text-ink-500 text-pretty sm:mt-9',
             )}
           >
-            A board of four and a team of six — the whole operation in Nepal. No department to be
-            escalated to: every job below has one name against it, and precisely what lands on that
-            desk when something goes wrong.
+            The board that signs for the group, and the desks you actually reach. No department to
+            be escalated to: every job below has one name against it, and that is the person
+            answerable when something goes wrong.
           </p>
 
           {/* Absorbs whatever height the viewport has left, so the ledger
@@ -164,7 +167,29 @@ export default function Leadership() {
             </p>
           </div>
 
-          <ul className="mt-12 grid gap-x-6 gap-y-12 sm:mt-14 sm:grid-cols-2 lg:grid-cols-4 lg:gap-x-8">
+          {/* The heading over the plates, matching the one over the management
+              panels — the two tiers are the same object twice, one on paper and
+              one on black, and a label alone on this band left the second one
+              looking like the only titled section on the page. A step smaller
+              than the masthead above it, so the hierarchy still reads
+              page → tier → person. */}
+          <h2
+            data-reveal
+            className="mx-auto mt-10 max-w-[20ch] text-center font-display text-[clamp(2.25rem,5.2vw,4rem)] leading-[1.0] font-extrabold tracking-[-0.045em] text-ink-900 text-balance"
+          >
+            The four who <span className="text-brand-600">sign</span> for it.
+          </h2>
+
+          <p
+            data-reveal
+            className="mx-auto mt-7 max-w-[54ch] text-center text-[15.5px] leading-[1.75] text-ink-500 text-pretty"
+          >
+            The MV Dugar Group board, which holds the authorised distributorship for Revolt Motors
+            in Nepal. They commit the capital, and they carry what the operation below them
+            promises.
+          </p>
+
+          <ul className="mt-16 grid gap-x-6 gap-y-12 sm:mt-20 sm:grid-cols-2 lg:grid-cols-4 lg:gap-x-8">
             {BOARD.map((person, index) => {
               return (
                 <li key={person.slug} id={person.slug} data-reveal className="group scroll-mt-28">
@@ -210,105 +235,216 @@ export default function Leadership() {
       </section>
 
       {/* ── The management team ───────────────────────────────────────────
-          Rows, not plates. Six equal tiles would set the remit — the only thing
-          on this band worth reading — as small print inside a box; a row gives
-          it a column of its own at the size the rest of the site sets body
-          copy. The whole row fills to ink on hover. */}
+          Two desks, and the band is designed for two rather than tolerating
+          them. The previous version was a six-row ledger with a remit column;
+          on a roster this short that layout read as a table with the data
+          missing. So the tier is set as panels on black — the only dark band
+          between two white ones — and the thing that fills the panel is the
+          name at poster scale with the initial standing behind it, because the
+          name *is* the content until portraits and remits arrive.
+
+          Three deliberate moves:
+
+          1. The heading is centred over the roster, the way the masthead at the
+             top of this page is centred over the ledger. A left rail put the
+             claim beside the panels and made the band read as two unrelated
+             columns; centred, it is one object with a title.
+          2. The panels sit square under it — equal cells, no stepping. A
+             centred title asks for a symmetrical roster beneath it, and the
+             grid takes three or six without any of it being restated.
+          3. Hover prints the panel to paper: the chalk ground scales up from
+             the bottom edge under a red rule pulling left to right, which is
+             the press pass the launch gate uses. The row version filled to ink;
+             on a black band the same gesture has to run the other way.
+
+          Everything the admin will send is already wired: `photo` swaps the
+          ghost initial for a plate, and `remit`/`since` set under the role when
+          they exist. Nothing here is sized to a fixed roster length. */}
       <section
         id="management"
         ref={managementRef}
-        className="scroll-mt-24 border-y border-ink-900/[0.07] bg-ink-50 py-16 sm:py-20 lg:py-24"
+        className="relative scroll-mt-24 overflow-hidden bg-ink-950 py-20 sm:py-24 lg:py-28"
       >
-        <Container className="max-w-[92rem]">
+        {/* Tooth on the black, the same grain the dark photographic bands use.
+            A flat near-black panel this large reads as a switched-off screen. */}
+        <div aria-hidden="true" className="grain pointer-events-none absolute inset-0 opacity-[0.35]" />
+
+        <Container className="relative max-w-[92rem]">
+          {/* ── The heading, centred over the roster ───────────────────────
+              Rule-flanked label, claim, standfirst — the page's own masthead
+              set in reverse on the black. The count rides the right-hand rule
+              rather than sitting under the copy as a figure: at two it would be
+              a statistic about nothing. */}
           <div data-reveal className="flex items-center gap-5">
-            <span aria-hidden="true" className="h-px flex-1 bg-ink-900/12" />
-            <p className={cn(LABEL, 'text-brand-600')}>Management team</p>
-            <span aria-hidden="true" className="h-px flex-1 bg-ink-900/12" />
-            <p className={cn(LABEL, 'hidden shrink-0 text-ink-900/35 tabular-nums sm:block')}>
+            <span aria-hidden="true" className="h-px flex-1 bg-white/15" />
+            <p className={cn(LABEL, 'shrink-0 text-brand-500')}>Management team</p>
+            <span aria-hidden="true" className="h-px flex-1 bg-white/15" />
+            <p className={cn(LABEL, 'hidden shrink-0 text-white/30 tabular-nums sm:block')}>
               01 — {String(MANAGEMENT.length).padStart(2, '0')}
             </p>
           </div>
 
-          <ul className="mt-12 border-b border-ink-900/12 sm:mt-14">
+          <h2
+            data-reveal
+            className="mx-auto mt-10 max-w-[20ch] text-center font-display text-[clamp(2.25rem,5.2vw,4rem)] leading-[1.0] font-extrabold tracking-[-0.045em] text-chalk-100 text-balance"
+          >
+            The desks you <span className="text-brand-500">actually</span> reach.
+          </h2>
+
+          <p
+            data-reveal
+            className="mx-auto mt-7 max-w-[54ch] text-center text-[15.5px] leading-[1.75] text-chalk-400 text-pretty"
+          >
+            The board signs for the group. These are the people who answer the phone, quote the job
+            and are named when it goes wrong — reachable by name at the showroom.
+          </p>
+
+          {/* ── The panels ─────────────────────────────────────────────────
+              Held to a narrower measure than the band so two cells centre
+              under the heading instead of stretching to the full 92rem, where
+              a pair reads as two billboards with a gap between them. */}
+          <ul className="mx-auto mt-16 grid max-w-[64rem] gap-8 sm:mt-20 sm:grid-cols-2">
             {MANAGEMENT.map((person, index) => (
-              <li
-                key={person.slug}
-                id={person.slug}
-                data-reveal
-                className="group scroll-mt-28 border-t border-ink-900/12"
-              >
-                <div
-                  className={cn(
-                    'grid items-start gap-5 px-3 py-8 sm:px-6 lg:py-10',
-                    'lg:grid-cols-[3rem_5.5rem_1fr_1.15fr] lg:items-center lg:gap-8',
-                    'transition-colors duration-500',
-                    EASE,
-                    'group-hover:bg-ink-900',
-                  )}
-                >
+              <li key={person.slug} id={person.slug} data-reveal className="group scroll-mt-28">
+                <div className="relative overflow-hidden border-t border-white/15">
+                  {/* The press pass: a red rule printing left to right. */}
                   <span
                     aria-hidden="true"
                     className={cn(
-                      'font-display text-sm font-bold tabular-nums text-ink-900/25',
-                      'transition-colors duration-500',
+                      'absolute inset-x-0 top-0 z-10 h-[2px] origin-left scale-x-0 bg-brand-500',
+                      'transition-transform duration-700',
                       EASE,
-                      'group-hover:text-brand-500',
+                      'group-hover:scale-x-100',
                     )}
-                  >
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
+                  />
+                  {/* Paper, pulled up from the bottom edge. */}
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      'absolute inset-0 origin-bottom scale-y-0 bg-chalk-100',
+                      'transition-transform duration-500',
+                      EASE,
+                      'group-hover:scale-y-100',
+                    )}
+                  />
 
-                  <Portrait person={person} variant="chip" />
+                  {/* The initial, standing behind the name. This is the
+                      portrait's slot: it is what a missing photograph looks
+                      like here, and it is deliberately not a grey box. */}
+                  {!person.photo && (
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        'pointer-events-none absolute -right-3 -bottom-10 font-display',
+                        'text-[10rem] leading-none font-extrabold tracking-[-0.06em] text-white/[0.07]',
+                        'transition-colors duration-500 sm:text-[12rem]',
+                        EASE,
+                        'group-hover:text-ink-900/[0.07]',
+                      )}
+                    >
+                      {monogram(person.name)}
+                    </span>
+                  )}
 
-                  <div>
-                    <h3
-                      className={cn(
-                        'font-display text-[clamp(1.5rem,3vw,2.25rem)] leading-[1.05] font-extrabold tracking-[-0.035em] text-ink-900',
-                        'transition-colors duration-500',
-                        EASE,
-                        'group-hover:text-white',
-                      )}
-                    >
-                      {person.name}
-                    </h3>
-                    <p
-                      className={cn(
-                        LABEL,
-                        'mt-3 text-brand-600 transition-colors duration-500',
-                        EASE,
-                        'group-hover:text-brand-500',
-                      )}
-                    >
-                      {person.role}
-                    </p>
-                  </div>
+                  <div className="relative flex min-h-[17rem] flex-col justify-between p-7 sm:p-8 lg:min-h-[21rem]">
+                    <div className="flex items-start justify-between gap-4">
+                      <span
+                        className={cn(
+                          LABEL,
+                          'text-white/35 tabular-nums transition-colors duration-500',
+                          EASE,
+                          'group-hover:text-ink-900/40',
+                        )}
+                      >
+                        Desk {String(index + 1).padStart(2, '0')}
+                      </span>
 
-                  <div>
-                    <p
-                      className={cn(
-                        'max-w-[46ch] text-[16px] leading-[1.7] text-ink-800 text-pretty sm:text-[17px]',
-                        'transition-colors duration-500',
-                        EASE,
-                        'group-hover:text-white/70',
+                      {/* When the admin sends a portrait it lands here, at
+                          the site's square chip, and the ghost initial above
+                          stands down. */}
+                      {person.photo && (
+                        <img
+                          src={person.photo}
+                          alt={person.name}
+                          loading="lazy"
+                          className={cn(
+                            'size-16 shrink-0 object-cover object-top ring-1 ring-white/20',
+                            'transition-[box-shadow] duration-500 sm:size-20',
+                            EASE,
+                            'group-hover:ring-ink-900/15',
+                          )}
+                        />
                       )}
-                    >
-                      {person.remit}
-                    </p>
-                    <p
-                      className={cn(
-                        LABEL,
-                        'mt-4 text-ink-500 transition-colors duration-500',
-                        EASE,
-                        'group-hover:text-white/40',
+                    </div>
+
+                    <div className="mt-12">
+                      <h3
+                        className={cn(
+                          'font-display text-[clamp(2.25rem,4.4vw,3.25rem)] leading-[0.98] font-extrabold tracking-[-0.045em] text-chalk-100',
+                          'transition-colors duration-500',
+                          EASE,
+                          'group-hover:text-ink-900',
+                        )}
+                      >
+                        {person.name}
+                      </h3>
+
+                      <p
+                        className={cn(
+                          LABEL,
+                          'mt-4 text-brand-500 transition-colors duration-500',
+                          EASE,
+                          'group-hover:text-brand-600',
+                        )}
+                      >
+                        {person.role}
+                      </p>
+
+                      {person.remit && (
+                        <p
+                          className={cn(
+                            'mt-5 max-w-[38ch] text-[15.5px] leading-[1.7] text-chalk-400 text-pretty',
+                            'transition-colors duration-500',
+                            EASE,
+                            'group-hover:text-ink-800',
+                          )}
+                        >
+                          {person.remit}
+                        </p>
                       )}
-                    >
-                      In post since {person.since}
-                    </p>
+
+                      {person.since && (
+                        <p
+                          className={cn(
+                            LABEL,
+                            'mt-5 text-white/30 transition-colors duration-500',
+                            EASE,
+                            'group-hover:text-ink-900/40',
+                          )}
+                        >
+                          In post since {person.since}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </li>
             ))}
           </ul>
+
+          {/* The roster is short on purpose and says so, once, quietly. A page
+              that lists two desks without a word about it invites the reader to
+              assume the rest failed to load. Centred to the panels above it, on
+              their measure rather than the band's. */}
+          <p
+            data-reveal
+            className={cn(
+              LABEL,
+              'mx-auto mt-16 max-w-[64rem] border-t border-white/12 pt-6 text-center text-white/30 sm:mt-20',
+            )}
+          >
+            Further desks are published here as each appointment is confirmed
+          </p>
         </Container>
       </section>
 
@@ -360,23 +496,21 @@ const HATCH = {
 }
 
 /**
- * A person's portrait, or the slot one will occupy.
+ * A board member's portrait, or the slot one will occupy. 3:4, on the paper.
  *
- * Two variants, one aspect discipline: `plate` is the board's 3:4 portrait,
- * `chip` is the square the management row carries. Both render the photograph
- * when `person.photo` is set and a marked placeholder when it is not, at
- * identical dimensions — so dropping the files in later changes what is inside
- * the box and nothing about the page around it.
+ * It renders the photograph when `person.photo` is set and a marked placeholder
+ * when it is not, at identical dimensions — so dropping a file in later changes
+ * what is inside the box and nothing about the page around it.
+ *
+ * Board only. The management panels carry their own portrait slot, because on
+ * black a hatched paper square is a hole rather than a reserved space, and the
+ * ghost initial does that job there instead.
  *
  * `object-top` on the image, not `object-center`: a head-and-shoulders frame
  * cropped to 3:4 from the centre takes the chin off.
  */
-function Portrait({ person, variant = 'plate' }) {
-  const plate = variant === 'plate'
-
-  const frame = plate
-    ? 'aspect-[3/4] w-full'
-    : 'size-16 shrink-0 sm:size-[5.5rem]'
+function Portrait({ person }) {
+  const frame = 'aspect-[3/4] w-full'
 
   if (person.photo) {
     return (
@@ -387,7 +521,7 @@ function Portrait({ person, variant = 'plate' }) {
           loading="lazy"
           className={cn(
             'h-full w-full object-cover object-top',
-            plate && 'transition-transform duration-700 group-hover:scale-[1.03]',
+            'transition-transform duration-700 group-hover:scale-[1.03]',
             EASE,
           )}
         />
@@ -400,37 +534,18 @@ function Portrait({ person, variant = 'plate' }) {
       role="img"
       aria-label={`Portrait of ${person.name} to come`}
       style={HATCH}
-      className={cn(
-        'relative grid place-items-center bg-ink-50 ring-1 ring-ink-900/12',
-        frame,
-        // Only the row inverts, so only the chip needs to survive it.
-        !plate && 'transition-colors duration-500 group-hover:bg-transparent group-hover:ring-white/25',
-        EASE,
-      )}
+      className={cn('relative grid place-items-center bg-ink-50 ring-1 ring-ink-900/12', frame)}
     >
       <span
         aria-hidden="true"
-        className={cn(
-          'font-display font-extrabold tracking-[-0.03em] text-ink-900/25',
-          plate ? 'text-[clamp(2rem,4vw,3rem)]' : 'text-[20px] sm:text-[26px]',
-          !plate && 'transition-colors duration-500 group-hover:text-white/60',
-          EASE,
-        )}
+        className="font-display text-[clamp(2rem,4vw,3rem)] font-extrabold tracking-[-0.03em] text-ink-900/25"
       >
         {monogram(person.name)}
       </span>
 
-      {/* Named as pending only on the board plate. On the row's 64px chip there
-          is no room for the line, and the monogram already reads as a stand-in
-          at that size. */}
-      {plate && (
-        <span
-          aria-hidden="true"
-          className={cn(LABEL, 'absolute bottom-4 text-[10px] text-ink-900/30')}
-        >
-          Portrait to come
-        </span>
-      )}
+      <span aria-hidden="true" className={cn(LABEL, 'absolute bottom-4 text-[10px] text-ink-900/30')}>
+        Portrait to come
+      </span>
     </div>
   )
 }

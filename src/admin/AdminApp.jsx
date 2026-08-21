@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Route, Routes } from 'react-router-dom'
-import { currentSession } from './backend/session'
+import { currentSession } from './data/session'
 import Login from './Login'
 import Shell from './Shell'
 import Collection from './pages/Collection'

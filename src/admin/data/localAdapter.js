@@ -1,6 +1,7 @@
+import { BOARD, MANAGEMENT } from '@/data/leadership'
 import { MOTORCYCLES } from '@/data/motorcycles'
 import { POSTS } from '@/data/posts'
-import { COLLECTIONS, slugify } from './schema'
+import { COLLECTIONS, COLLECTION_KEYS, slugify } from './schema'
 
 const STORE_KEY = 'revolt:admin-store:v1'
 
@@ -24,10 +25,20 @@ const wait = () => new Promise((resolve) => setTimeout(resolve, LATENCY))
  * admin that mutated them in place would edit the running page and lose the edit
  * on reload, which is the most confusing possible combination.
  */
-function seed() {
-  return {
-    motorcycles: structuredClone(MOTORCYCLES),
-    posts: structuredClone(POSTS).map((post) => ({
+/**
+ * Where each collection's starting records come from, keyed the same way the
+ * schema is.
+ *
+ * A map rather than a literal object built by hand, so registering a collection
+ * is one entry here and nothing else — the read path below is driven by
+ * `COLLECTION_KEYS`, and a collection with no seed simply starts empty rather
+ * than crashing the adapter on a missing property.
+ */
+const SEEDS = {
+  motorcycles: () => structuredClone(MOTORCYCLES),
+
+  posts: () =>
+    structuredClone(POSTS).map((post) => ({
       // The site's own posts predate the draft/published split and have no
       // status. They are live, so they seed as published rather than as drafts —
       // the alternative would quietly empty the journal the first time the admin
@@ -35,7 +46,27 @@ function seed() {
       status: 'published',
       ...post,
     })),
-  }
+
+  // The page's two exported rosters, flattened into the one register that edits
+  // them. The arrays are already in the order the page prints them, so their
+  // index is the ranking and nobody has to retype it. Counted from 1 within each
+  // tier, so the Chairman is 1 and not 10.
+  leadership: () => [
+    ...structuredClone(BOARD).map((person, index) => ({
+      ...person,
+      tier: 'board',
+      order: index + 1,
+    })),
+    ...structuredClone(MANAGEMENT).map((person, index) => ({
+      ...person,
+      tier: 'management',
+      order: index + 1,
+    })),
+  ],
+}
+
+function seed() {
+  return Object.fromEntries(COLLECTION_KEYS.map((key) => [key, SEEDS[key]?.() ?? []]))
 }
 
 function read() {
@@ -44,13 +75,17 @@ function read() {
     if (!raw) return seed()
 
     const parsed = JSON.parse(raw)
-    // Only trust the shape as far as the collections we know about. A store
-    // written by an older version is missing whatever was added since, and
-    // falling back per collection recovers from that without wiping the rest.
-    return {
-      motorcycles: Array.isArray(parsed.motorcycles) ? parsed.motorcycles : seed().motorcycles,
-      posts: Array.isArray(parsed.posts) ? parsed.posts : seed().posts,
-    }
+    // Only trust the shape as far as the collections we know about, and fall back
+    // per collection rather than wholesale. A store written before a collection
+    // existed is missing that key entirely — which is the normal case for anyone
+    // who used the admin last week — and it should gain the new register seeded
+    // without losing the edits it already holds.
+    return Object.fromEntries(
+      COLLECTION_KEYS.map((key) => [
+        key,
+        Array.isArray(parsed[key]) ? parsed[key] : (SEEDS[key]?.() ?? []),
+      ]),
+    )
   } catch {
     // Corrupt JSON, or storage blocked outright (private-mode Safari, a browser
     // refusing storage in a frame). Falling back to the seed keeps the admin
