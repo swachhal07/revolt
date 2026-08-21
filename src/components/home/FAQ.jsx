@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useReveal } from '@/hooks/useReveal'
 import { cn } from '@/utils/cn'
 import { formatNpr } from '@/utils/format'
@@ -43,9 +42,10 @@ import { FLAGSHIP, PRICED_MOTORCYCLES } from '@/data/motorcycles'
  * is the seam the film fold used to make with the footer on its own — the page
  * still never runs two black slabs into each other.
  *
- * The link goes to the dealer network rather than asking for a test ride. The folds
- * above already made the page's one ask, and a second would read as the site not
- * having listened.
+ * The section ends on its last answer. There was a line and a pill here pointing
+ * at the dealer network, and the fold is better without them: the folds above
+ * already made the page's one ask, a second reads as the site not having
+ * listened, and the addresses are in the footer of every page anyway.
  *
  * Answers open and close by `hidden` rather than by a height transition: a height
  * transition needs a measured pixel value to interpolate toward, and copy that
@@ -358,55 +358,11 @@ export default function FAQ() {
           })}
         </div>
 
-        {/* ── The way out ───────────────────────────────────────────────────── */}
-        {/* One line and one control, on the same axis as everything above. The pill
-            carries its arrow in a well of its own rather than loose beside the
-            label: the well is what makes the whole thing read as a single machined
-            object, and it gives the hover something to move inside. The pill takes
-            the press and the well takes the travel. */}
-        <div className={cn('mt-14 flex flex-col items-center gap-5 sm:mt-16', rise('delay-150'))}>
-          <p className="text-center text-base leading-relaxed text-ink-800/70">
-            Anything else is better asked in person.
-          </p>
-
-          <Link
-            to="/dealers"
-            className={cn(
-              'group inline-flex items-center gap-3 rounded-full bg-ink-900 py-2 pr-2 pl-6',
-              'text-base font-semibold text-white',
-              'shadow-[0_1px_2px_rgba(5,5,5,0.16),0_18px_36px_-24px_rgba(5,5,5,0.55)]',
-              'transition-[transform,background-color] duration-500',
-              EASE,
-              'hover:bg-ink-800 active:scale-[0.985]',
-              'focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand-500',
-            )}
-          >
-            Find your nearest workshop
-            <span
-              aria-hidden="true"
-              className={cn(
-                'grid size-9 shrink-0 place-items-center rounded-full bg-white/12',
-                'ring-1 ring-white/12 ring-inset',
-                'transition-[transform,background-color] duration-500',
-                EASE,
-                'group-hover:translate-x-0.5 group-hover:-translate-y-px group-hover:scale-105 group-hover:bg-brand-500',
-              )}
-            >
-              {/* Drawn here rather than imported: two strokes at the weight the rest
-                  of the site's marks are drawn at, and no icon set to load for one
-                  arrow. */}
-              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" className="size-3.5">
-                <path
-                  d="M3.5 12.5 12.5 3.5M6 3.5h6.5V10"
-                  stroke="currentColor"
-                  strokeWidth="1.25"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-          </Link>
-        </div>
+        {/* No closing line and no control. There was a "find your nearest
+            workshop" pill here, and the section is better without it: the
+            addresses are one click away in the footer of every page, and the
+            fold's job is answering the questions, not handing off. The last
+            answer is the end of it. */}
       </div>
     </section>
   )

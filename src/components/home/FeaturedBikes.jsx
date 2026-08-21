@@ -628,7 +628,16 @@ export default function FeaturedBikes() {
             reader could already see, and it was one of three tracked-caps
             eyebrows on this page — the tell that a layout is being scaffolded
             rather than composed. The heading opens the section on its own. */}
+        {/* The anchor the footer's Vehicles entry jumps to — see the note on
+            that entry in `constants/site.js`.
+
+            On the heading rather than on the section, so the jump lands with the
+            heading at the top of the reader's screen and the two hero bikes
+            directly under it. The section's own top edge is four or five rem of
+            padding higher, which arrives as a screen that opens on white.
+            `ScrollToTop` holds the landing clear of the fixed bar. */}
         <h2
+          id="lineup"
           data-reveal="24"
           className={cn(
             'text-center font-display font-bold uppercase text-ink-900',

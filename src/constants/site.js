@@ -16,7 +16,23 @@ export const NAV_LINKS = [
   // divider — six cells cannot carry an eleven-character word. The path is
   // untouched: `/motorcycles` is the URL, the data and the page, and only the
   // word on the bar changed.
-  { label: 'Vehicles', to: '/motorcycles' },
+  //
+  // `jumpTo` is where a plain link actually goes, and it exists because
+  // `/motorcycles` is currently a stub that renders a heading and nothing else.
+  // Anything that navigates should land on the lineup band on the home page
+  // instead of on an empty screen.
+  //
+  // `to` stays `/motorcycles` and is not rewritten, because two things in the
+  // navbar match on it: `HEADER_PATHS`, which decides whether this appears in
+  // the bar at all, and `MENU_PATH`, which makes this the one bar item that
+  // opens the lineup panel rather than navigating. Point `to` at an anchor and
+  // Vehicles silently drops out of the header and the panel loses its trigger.
+  //
+  // So this is a deliberate, single, documented divergence rather than a second
+  // source of truth: `to` is still the canonical route, and `jumpTo` is the
+  // stand-in until the lineup page is built. Delete it then and the footer goes
+  // back to `to` on its own.
+  { label: 'Vehicles', to: '/motorcycles', jumpTo: '/#lineup' },
   { label: 'Blog', to: '/blog' },
   { label: 'About', to: '/about' },
   // Sits next to About because it answers the follow-up question that page

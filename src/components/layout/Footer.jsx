@@ -227,7 +227,10 @@ export default function Footer() {
                 )}
               >
                 <Link
-                  to={link.to}
+                  // `jumpTo` where an entry sets one — the destination a plain
+                  // link should reach, which is not always the canonical route.
+                  // See the Vehicles entry in `constants/site.js`.
+                  to={link.jumpTo ?? link.to}
                   className={cn(
                     'group flex items-baseline gap-4 py-7 lg:gap-5 lg:py-10',
                     // Every cell holds its number clear of the rule on its

@@ -2,7 +2,7 @@ import Container from '@/components/ui/Container'
 import DetailCarousel from '@/components/about/DetailCarousel'
 import { useMounted } from '@/hooks/useReveal'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
-import { DEALERS } from '@/data/dealers'
+import { BRANCH_COUNT, POINT_COUNT } from '@/data/network'
 import portrait from '@/assets/images/Hardik with RVX.jpg'
 import dugarLogo from '@/assets/images/dugar-logo.png'
 import { cn } from '@/utils/cn'
@@ -42,26 +42,44 @@ import { cn } from '@/utils/cn'
  *
  * PLACEHOLDER DATA — the founding year in the ledger is a stand-in pending the
  * real one, marked at the constant. The group band's copy is drafted rather
- * than supplied and still needs sign-off. The showroom count and the lineup
- * count are read from `data/`, so they cannot drift from the rest of the site.
+ * than supplied and still needs sign-off. The branch and sales-point counts are
+ * read from `data/network.js`, so they cannot drift from the rest of the site.
  */
 
 const EASE = 'ease-[cubic-bezier(0.32,0.72,0,1)]'
 
 const LABEL = 'text-[11px] font-semibold tracking-[0.2em] uppercase'
 
-// `Showrooms` is counted off `data/dealers.js` and cannot drift. `Since` still
-// needs the real founding year. The rider figure is stated as a floor rather
-// than a count, because that is what we can stand behind.
+// Three of the four are counted off `data/` and cannot drift.
+//
+// The reach figures are the group's branch network rather than
+// `data/dealers.js`, which holds one Revolt showroom. One is the honest count of
+// Revolt showrooms and it is also the least useful number on the page: what
+// answers "will somebody be there when I need them" is the fifteen branches and
+// ten sales points the motorcycles sit inside. So that is what the ledger
+// states, and it is labelled as branches rather than as showrooms, because
+// `data/network.js` is explicit that these are MV Dugar's counters and not
+// Revolt's — calling fifteen of them Revolt showrooms would be a claim the data
+// does not support.
+//
+// The rider count that used to close the row is gone. It was "1000+", which was
+// not counted off anything and could not be; a figure nobody can source does not
+// belong in a ledger where every other cell is checkable. The appointment takes
+// the opening cell instead, which is the claim actually worth making.
 //
 // `Models` is stated as six, which is the real lineup — but `data/motorcycles.js`
 // only holds three (RV400, RV400 BRZ, RV1), so it cannot be counted off the data
 // yet. Add the other three there and this goes back to MOTORCYCLES.length.
 const LEDGER = [
-  { term: 'Distributor since', value: '2023' },
-  { term: 'Showrooms', value: String(DEALERS.length).padStart(2, '0') },
+  // No "since". The word took the label to thirty-five characters, which is
+  // wider than the cell at the four-across breakpoint, and it wrapped onto a
+  // second line that pushed this cell's figure out of line with the other three.
+  // The year sitting under it reads as the year regardless — that is what a
+  // ledger cell is — so the word was carrying nothing but the wrap.
+  { term: 'Authorised Revolt distributor', value: '2023' },
+  { term: 'Branches', value: String(BRANCH_COUNT).padStart(2, '0') },
+  { term: 'Sales points', value: String(POINT_COUNT).padStart(2, '0') },
   { term: 'Models', value: '06' },
-  { term: 'Riding in Nepal', value: '1000+' },
 ]
 
 // NEEDS SIGN-OFF. Written from facts already stated elsewhere on the site — the

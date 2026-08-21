@@ -265,7 +265,7 @@ export const MOTORCYCLES = [
     class: 'Sport',
     tagline: 'The flagship. Full-size, full-torque, fully electric.',
     punch: 'Full-size, fully electric.',
-    priceNpr: 549000,
+    priceNpr: 449000,
     image: '/images/hero/rv400brz.webp',
     studio: studioRv400,
     // Eclipse Red leads because it is also `studio` above — the cutout the
@@ -375,7 +375,7 @@ export const MOTORCYCLES = [
     class: 'City',
     tagline: 'Same platform, sharper city focus.',
     punch: 'Sharper in the city.',
-    priceNpr: 489000,
+    priceNpr: 419000,
     // STILL AN RVX FRAME, and still wrong. `image` is the action shot for
     // full-bleed use away from this model's own page; `hero` below now overrides
     // it there, so the detail page is correct, but anything else reaching for
@@ -464,7 +464,7 @@ export const MOTORCYCLES = [
     class: 'Commuter',
     tagline: 'Entry-level electric that still gets out of its own way.',
     punch: 'Quick where it counts.',
-    priceNpr: 299000,
+    priceNpr: null,
     // ANOTHER MODEL'S PHOTOGRAPH, like the BRZ's was. `hero` below overrides it
     // on this model's own page; anything else reaching for `image` is showing an
     // RVX under an RV1 name.
@@ -556,20 +556,24 @@ export const MOTORCYCLES = [
   },
 
   // ── AWAITING REAL DATA ────────────────────────────────────────────────
-  // The three below carry only what the photographs themselves establish:
-  // the model on the badge, the class, and the cutout. `tagline`, `priceNpr`,
-  // `specs` and `highlights` are deliberately left empty rather than guessed —
-  // a made-up range figure or price on a real product is worse than a gap, and
-  // every component that reads them handles the gap (the lineup on the home
-  // page needs none of them).
+  // Both below now carry a supplied MRP. What they still lack is `specs` and
+  // `highlights`, which are deliberately left empty rather than guessed — a
+  // made-up range figure on a real product is worse than a gap, and every
+  // component that reads them handles the gap (the lineup on the home page
+  // needs none of them).
   //
-  // To finish a bike: fill the four empty fields and delete its TODO line.
-  // Nothing else has to change.
+  // To finish a bike: fill the empty fields and delete its TODO line. Nothing
+  // else has to change.
+  //
+  // On prices generally: only a figure from the MRP sheet goes in. Anything not
+  // on it stays `null`, which every surface renders as "on request" rather than
+  // as a blank — see `MotorcycleCard` and `DetailHero`. That is why RVX and RV1
+  // carry no figure: a stale price on a real product is the one error here that
+  // costs somebody money.
   {
     slug: 'blazex',
     name: 'RV BlazeX',
     class: 'Commuter',
-    // TODO: priceNpr
     //
     // DRAFT COPY, written here rather than supplied. Free of numbers like the
     // rest of the taglines — the figure it is built on is real (this machine
@@ -579,7 +583,7 @@ export const MOTORCYCLES = [
     // the RV400's "Full-size, full-torque".
     tagline: 'Commuter shape. Flagship torque.',
     punch: 'Commuter shape, flagship torque.',
-    priceNpr: null,
+    priceNpr: 399000,
     image: '/images/hero/rv400brz.webp',
     studio: studioBlazeX,
     // Eclipse Red leads because it is also `studio` above — the cutout the
@@ -660,7 +664,6 @@ export const MOTORCYCLES = [
     slug: 'rv1-neon',
     name: 'RV1+',
     class: 'Commuter',
-    // TODO: priceNpr
     //
     // DRAFT COPY, written here rather than supplied. The claim is the one thing
     // that actually separates this from the RV1: same motor, same torque, same
@@ -669,7 +672,7 @@ export const MOTORCYCLES = [
     // that, and it is accurate rather than a comparison invented for effect.
     tagline: 'The RV1, with the range to leave town.',
     punch: 'The range to leave town.',
-    priceNpr: null,
+    priceNpr: 349000,
     image: '/images/hero/hardik-rvx.webp',
     // BRIGHT, WHERE THE HERO WANTS DARK. The other two frames on this list are a
     // night city and an overcast pit lane; this one is midday on a seaside
