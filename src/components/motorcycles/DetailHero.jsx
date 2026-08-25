@@ -219,11 +219,30 @@ export default function DetailHero({ bike }) {
             {/* Was `white/50`. Half-opacity white is a comfortable label tone
                 over a dark panel and an unreadable one over a photograph, and
                 this label has always been over a photograph. */}
+            {/* `priceLabel` is how a model says its price is an offer rather
+                than its standing figure — see the RVX in [[motorcycles]]. It is
+                set in the same white as the standing "Starting at" it replaces:
+                over a photograph the accent red was carrying the label on colour
+                alone, and the strike-through underneath already says an offer is
+                running without spending the fold's one accent on saying it
+                twice. */}
             <p className="font-plate text-[11px] font-semibold tracking-[0.24em] text-white/75 uppercase">
-              {bike.priceNpr == null ? 'Price' : 'Starting at'}
+              {bike.priceLabel ?? (bike.priceNpr == null ? 'Price' : 'Starting at')}
             </p>
-            <p className="mt-2 font-plate text-3xl font-bold tracking-[0.01em] text-white sm:text-4xl">
-              {bike.priceNpr == null ? 'On request' : formatNpr(bike.priceNpr)}
+
+            {/* The offer and what it undercuts, on one line. The MRP is set at
+                half the offer's size and struck through, so the pair reads as
+                one figure with its own footnote rather than as two prices a
+                reader has to work out the relationship between. `line-through`
+                is enough here — nothing is animating, unlike the reveal this
+                replaces. */}
+            <p className="mt-2 flex flex-wrap items-baseline gap-x-3 font-plate text-3xl font-bold tracking-[0.01em] text-white sm:justify-end sm:text-4xl">
+              <span>{bike.priceNpr == null ? 'On request' : formatNpr(bike.priceNpr)}</span>
+              {bike.mrpNpr != null && bike.priceNpr != null ? (
+                <span className="text-[0.5em] font-semibold text-white/60 line-through">
+                  {formatNpr(bike.mrpNpr)}
+                </span>
+              ) : null}
             </p>
             {/* The fine print stays on the body face. Everything above it in
                 this cluster is a label or a figure; this is a sentence, and
@@ -235,6 +254,13 @@ export default function DetailHero({ bike }) {
                 were never the same requirement. */}
             <p className="mt-2 text-[13px] text-white/75">
               {bike.priceNpr == null ? 'Ask at the showroom' : 'Ex-showroom, Kathmandu'}
+              {/* The saving, derived rather than authored: two figures and a
+                  third quoting their difference is three numbers that can
+                  disagree, and the one that would be wrong is the persuasive
+                  one. */}
+              {bike.mrpNpr != null && bike.priceNpr != null
+                ? ` · You save ${formatNpr(bike.mrpNpr - bike.priceNpr)}`
+                : null}
             </p>
           </div>
 

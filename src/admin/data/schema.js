@@ -51,7 +51,7 @@ export const COLLECTIONS = {
     // can go stale without anything disappearing, which is the failure mode
     // worth designing against in a schema-driven editor.
     groups: [
-      { label: 'Identity', fields: ['name', 'slug', 'class', 'priceNpr'] },
+      { label: 'Identity', fields: ['name', 'slug', 'class', 'priceNpr', 'mrpNpr', 'priceLabel'] },
       { label: 'Words', fields: ['tagline', 'pitch', 'intro'] },
       { label: 'Photography', fields: ['image', 'hero', 'studio'] },
       { label: 'Colourways', fields: ['colours'] },
@@ -80,7 +80,21 @@ export const COLLECTIONS = {
         label: 'Price (NPR)',
         type: 'number',
         width: 'half',
-        help: 'Leave empty for an unannounced model. Anything that ranks or quotes by money skips a model with no price rather than showing zero.',
+        help: 'What the customer pays — the offer price if one is running, not the figure it is measured against. Leave empty for an unannounced model. Anything that ranks or quotes by money skips a model with no price rather than showing zero.',
+      },
+      {
+        name: 'mrpNpr',
+        label: 'MRP (NPR)',
+        type: 'number',
+        width: 'half',
+        help: 'Only for a model on offer: the price struck through beside the one above. The saving is worked out from the two, so do not write it anywhere. Leave empty and nothing is struck through.',
+      },
+      {
+        name: 'priceLabel',
+        label: 'Price label',
+        type: 'text',
+        width: 'half',
+        help: 'Replaces "Starting at" on the model page — e.g. "Exclusive NADA offer". Leave empty for a standing price. Clear this and the MRP together when an offer ends.',
       },
       {
         name: 'tagline',

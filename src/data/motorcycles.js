@@ -157,7 +157,7 @@ export const MOTORCYCLES = [
     slug: 'rvx',
     name: 'RVX',
     class: 'Sport',
-    // TODO: priceNpr, highlights
+    // TODO: highlights
     //
     // DRAFT COPY. Deliberately free of numbers, unlike `specs` below: every
     // claim in it is about character, which the photograph is making anyway.
@@ -172,7 +172,20 @@ export const MOTORCYCLES = [
     // the menu use and is allowed to explain itself. A model with no `punch`
     // falls back to the tagline and simply wraps. See [[DetailSpecs]].
     punch: 'Sharpened for the hills.',
-    priceNpr: null,
+    // THE SHOW PRICE, and `priceNpr` is deliberately the one being charged
+    // rather than the one being crossed out. Every other reader of this field —
+    // the lineup cards, the EMI calculator, the FAQ's "from X to Y" sentence —
+    // is answering "what does it cost", and for as long as the offer stands the
+    // honest answer is 3,99,000. `mrpNpr` is what it is measured against and is
+    // shown struck through beside it; `priceLabel` replaces the standing
+    // "Starting at".
+    //
+    // WHEN THE SHOW ENDS: drop `mrpNpr` and `priceLabel` and set `priceNpr` to
+    // 433000. Nothing else has to change, and no other model carries the two
+    // optional fields.
+    priceNpr: 399000,
+    mrpNpr: 433000,
+    priceLabel: 'Exclusive NADA offer',
     image: '/images/hero/rvx.webp',
     // PLACEHOLDER FRAME, assigned deliberately. The machine in this photograph
     // wears an RV BlazeX badge on the swingarm cover; it is filed on the RVX on

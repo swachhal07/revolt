@@ -25,13 +25,29 @@ export default function MotorcycleCard({ bike }) {
         </dl>
       ) : null}
 
-      <div className="mt-6 flex items-center justify-between border-t border-ink-900/10 pt-5">
-        <span className="font-display font-bold text-ink-900">
-          {bike.priceNpr == null ? 'Price on request' : formatNpr(bike.priceNpr)}
+      <div className="mt-6 flex items-center justify-between gap-4 border-t border-ink-900/10 pt-5">
+        {/* A model on offer prints both figures and says so; see the RVX in
+            [[motorcycles]]. The label goes above rather than beside them — this
+            row already has the link competing for its width, and a third element
+            on the same line is what turns a price into a queue. */}
+        <span className="min-w-0">
+          {bike.priceLabel ? (
+            <span className="block text-[11px] font-semibold tracking-[0.12em] text-brand-600 uppercase">
+              {bike.priceLabel}
+            </span>
+          ) : null}
+          <span className="mt-0.5 flex flex-wrap items-baseline gap-x-2 font-display font-bold text-ink-900">
+            <span>{bike.priceNpr == null ? 'Price on request' : formatNpr(bike.priceNpr)}</span>
+            {bike.mrpNpr != null && bike.priceNpr != null ? (
+              <span className="text-sm font-semibold text-ink-500 line-through">
+                {formatNpr(bike.mrpNpr)}
+              </span>
+            ) : null}
+          </span>
         </span>
         <Link
           to={`/motorcycles/${bike.slug}`}
-          className="text-sm font-semibold text-brand-600 hover:text-brand-700"
+          className="shrink-0 text-sm font-semibold text-brand-600 hover:text-brand-700"
         >
           View details →
         </Link>
