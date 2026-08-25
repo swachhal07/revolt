@@ -27,10 +27,14 @@ import { cn } from '@/utils/cn'
  * restarts the download. Two elements pointing at one URL is one download: the
  * file is in the HTTP cache by the time anybody presses the button.
  *
- * FROM THE TOP, WITH SOUND. The hero skips the twelve second logo sting and
- * runs silent, because a background loop should do both. This is not a
- * background — somebody pressed a button asking to watch it — so it starts at
- * zero, carries the browser's own controls, and comes up with the audio on.
+ * WITH SOUND. The hero runs the same file silent, because a background loop
+ * should. This is not a background — somebody pressed a button asking to watch
+ * it — so it carries the browser's own controls and comes up with the audio on.
+ *
+ * Which means the encode has to keep its audio track. It is muted by an
+ * attribute over there, not stripped by ffmpeg; see the note on the recipe in
+ * [[Hero]], because a `-an` in it makes this dialog silent with nothing here to
+ * show why.
  *
  * Sound is allowed here only because of that press. Autoplay with audio is
  * blocked everywhere unless the page has been "activated" by a user gesture,

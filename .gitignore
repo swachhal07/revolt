@@ -47,3 +47,5 @@ src/assets/images/REVOLT 96SEC.mp4
 src/assets/images/RVX 3D_Product_Video.mp4
 # 64MB. Cut: public/videos/rv-blazex.mp4.
 src/assets/images/RV_BlazeX.mp4
+# 222MB, exceeds GitHub's 100MB limit. Cut: public/videos/nepal-garcha.mp4.
+src/assets/images/Nepal Garcha Revolt.mp4
