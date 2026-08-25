@@ -48,8 +48,10 @@ import serviceSupport from '@/assets/images/service-and-support.avif'
  * row below. A third turns a device into a template.
  *
  * Below `lg` the wires are meaningless, since nothing is beside anything, so they
- * come off and the fold stacks: screen, caption, then the capabilities as two
- * columns of labels under it.
+ * come off and the fold stacks: screen, caption, then the two rails side by side
+ * as two columns of labels under it. Side by side rather than end to end because
+ * ten stacked labels ran past the bottom of a phone and the seam between the
+ * rails read as a gap in one list rather than as the join between two.
  */
 
 const EASE = 'ease-[cubic-bezier(0.32,0.72,0,1)]'
@@ -224,7 +226,12 @@ export default function RevOS() {
       >
         <span
           className={cn(
-            'font-display font-bold tracking-[-0.015em] whitespace-nowrap',
+            // Wraps below `lg` and only there. In two phone-width tracks the
+            // longest label ("Service and support") is wider than its column,
+            // and held on one line it would push the grid past the gutter. From
+            // `lg` the rails are wide enough to hold every label on one line,
+            // and there a wrap would break the wire running out of it.
+            'font-display font-bold tracking-[-0.015em] lg:whitespace-nowrap',
             // Up a step from 16/18. Against a 280px handset and rails this wide,
             // 16px labels read as captions on a diagram rather than as the thing
             // you are meant to choose from, and the fold's only interactive type
@@ -329,12 +336,26 @@ export default function RevOS() {
           // takes the rails to ~324 and the wires to roughly the length of the
           // labels they carry, which is what makes them read as a harness rather
           // than as leader dots in a table of contents.
-          className="mx-auto mt-14 grid max-w-5xl items-center gap-y-10 sm:mt-16 lg:mt-20 lg:grid-cols-[1fr_auto_1fr] lg:items-stretch lg:gap-x-12"
+          //
+          // Two columns from the smallest screen up, which is what puts the two
+          // rails beside each other rather than end to end. Stacked, the ten
+          // labels ran to about a screen and a half on a phone, and the seam
+          // between the rails read as an unexplained gap in one long list — the
+          // five below it looked like a second, lesser group. Side by side they
+          // are visibly one set again, and the whole fold fits in a viewport.
+          // The screen and the caption span both tracks; at `lg` the three-track
+          // hub takes over and the spans are released.
+          className="mx-auto mt-14 grid max-w-5xl grid-cols-2 items-center gap-x-5 gap-y-10 sm:mt-16 sm:gap-x-8 lg:mt-20 lg:grid-cols-[1fr_auto_1fr] lg:items-stretch lg:gap-x-12"
         >
           {/* Left rail. Third on a phone, where the order is screen, caption, then
-              the two columns of labels; `lg:order-first` puts it back beside the
-              screen. */}
-          <div className="order-3 flex flex-col items-start gap-1 lg:order-first lg:items-stretch lg:justify-between lg:py-8">
+              the two rails side by side; `lg:order-first` puts it back beside the
+              screen.
+
+              `self-start` so the two rails hang from the same line. Centred — the
+              grid's default here — a column that wrapped a label would sit half a
+              row lower than its neighbour, and the two lists would stop reading
+              as one set. */}
+          <div className="order-3 flex flex-col items-start gap-1 self-start lg:order-first lg:items-stretch lg:justify-between lg:self-auto lg:py-8">
             {leftTabs.map((item, i) => renderTab(item, i))}
           </div>
 
@@ -353,7 +374,7 @@ export default function RevOS() {
               // The cap is per breakpoint, not global: 16rem keeps the handset off
               // the gutters on a phone, and the desktop one is allowed the full
               // 17.5rem the rails were sized around.
-              'relative order-1 mx-auto w-[62vw] max-w-[16rem] sm:w-[13rem] lg:order-none lg:w-[17.5rem] lg:max-w-[17.5rem]',
+              'relative order-1 col-span-2 mx-auto w-[62vw] max-w-[16rem] sm:w-[13rem] lg:order-none lg:col-span-1 lg:w-[17.5rem] lg:max-w-[17.5rem]',
               'transition-[transform,opacity] duration-1000',
               EASE,
               here ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-8 scale-[0.97] opacity-0',
@@ -488,7 +509,7 @@ export default function RevOS() {
 
           {/* Right rail. Rows align to the right edge so the two columns read as
               one shape mirrored about the screen. */}
-          <div className="order-4 flex flex-col items-start gap-1 lg:order-none lg:items-stretch lg:justify-between lg:py-8">
+          <div className="order-4 flex flex-col items-start gap-1 self-start lg:order-none lg:items-stretch lg:justify-between lg:self-auto lg:py-8">
             {rightTabs.map((item, i) => renderTab(item, i + leftTabs.length))}
           </div>
 
@@ -506,7 +527,7 @@ export default function RevOS() {
             aria-live="polite"
             aria-atomic="true"
             className={cn(
-              'relative order-2 mx-auto max-w-xl text-center lg:order-last lg:col-span-3 lg:mt-2',
+              'relative order-2 col-span-2 mx-auto max-w-xl text-center lg:order-last lg:col-span-3 lg:mt-2',
               'transition-opacity duration-700',
               EASE,
               here ? 'opacity-100' : 'opacity-0',
