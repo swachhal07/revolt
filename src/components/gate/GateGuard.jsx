@@ -1,7 +1,7 @@
 import { useCallback, useLayoutEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import LaunchGate from './LaunchGate'
-import { isUnlocked } from '@/utils/gate'
+import { isUnlocked, markGateLift, revealPreview } from '@/utils/gate'
 import { getLenis } from '@/utils/lenis'
 
 /**
@@ -22,8 +22,22 @@ export default function GateGuard() {
   //
   // State only, with nothing behind it — a key typed on the gate holds for this
   // page load and no longer, so a reload lands back on the countdown.
-  const [unlocked, setUnlocked] = useState(isUnlocked)
-  const open = useCallback(() => setUnlocked(true), [])
+  //
+  // `?reveal` opens the gate in dev, because the screen it previews lives behind
+  // it: without this, looking at the price reveal means typing the access key on
+  // every reload. It is a build-time-erased flag, so it cannot open anything in
+  // production — see `revealPreview` in [[gate]].
+  const [unlocked, setUnlocked] = useState(() => isUnlocked() || revealPreview() != null)
+
+  // The lift is marked here rather than inside the gate because this is the only
+  // place that knows the difference between the gate lifting and the site simply
+  // being open: a visitor arriving after launch initialises `unlocked` to true
+  // above and this never runs. [[Hero]] reads it to decide whether the price
+  // reveal is owed.
+  const open = useCallback(() => {
+    markGateLift()
+    setUnlocked(true)
+  }, [])
 
   // The site opens at the top, whatever the gate was doing.
   //
