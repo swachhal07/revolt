@@ -28,6 +28,14 @@
   --color-volt-300: #b8ff5c;
   --color-volt-400: #9bf218;
   --color-volt-500: #7ed321;
+  /* Volt as *ink* rather than as light. The three steps above are all backlit
+     accents: they read as lit fills and they read as type on graphite, and on a
+     white sheet every one of them is a highlighter. This is the same hue taken
+     down to a pigment that clears 4.5:1 on paper, so the admin's numerals and
+     accent links keep the electric side of the palette on a light ground
+     instead of trading it for grey. Fills stay on 400 — a lit bar or a primary
+     button is light, and light does not get darker because the housing did. */
+  --color-volt-700: #4b7a00;
 
   --color-ink-50: #f6f6f7;
   --color-ink-500: #6b6b70;
@@ -369,6 +377,14 @@
   --color-lume-100: oklch(24% 0.012 255);
   --color-lume-400: oklch(44% 0.010 255);
   --color-lume-600: oklch(55% 0.009 255);
+
+  /* The alarm, repigmented. `brand-400` is only ever type in the admin, and a
+     pale red that glows on graphite is a pink that fails on paper — so it comes
+     down to a printed red. `brand-900` is only ever a wash under an alarm at
+     20–25% opacity, and a near-black red at that strength on white is a muddy
+     brown rather than a warning, so it goes up to a tint that stays red. */
+  --color-brand-400: #ce1414;
+  --color-brand-900: #ff8f8f;
 
   --edge-catch: rgb(255 255 255 / 0.9);
   --edge-throw: rgb(0 0 0 / 0.07);

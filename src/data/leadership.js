@@ -3,17 +3,13 @@
 //
 // WHAT IS REAL AND WHAT IS NOT — every name and title on both tiers is real.
 // The management tier is deliberately short: only the two confirmed people are
-// listed, and the rest of the team goes in from the admin once that section
-// exists. No `remit` has been approved by the person it would be printed
-// under, so none is set. The board's portraits are supplied; the management
-// team's are still `null`.
+// listed, and the rest of the team goes in from the admin. The board's
+// portraits are supplied; the management team's are still `null`.
 //
-// Only the management tier can carry a `remit`. The board is listed by title.
-//
-// `remit` is deliberately what the person is answerable for rather than a
-// biography. A leadership page that lists degrees answers a question nobody
-// asked; a customer wants to know who owns the problem when their bike is off
-// the road, and an institution wants to know who signs.
+// A person is a name, a title and a portrait. Both tiers once had room for a
+// remit — a line on what that person is answerable for — and it is gone: it is
+// a sentence that has to be approved by the person it is printed under, and a
+// field nobody will ever fill is worse than no field at all.
 
 import motiLalDugar from '@/assets/images/leadership/moti-lal-dugar.webp'
 import namanDugar from '@/assets/images/leadership/naman-dugar.webp'
@@ -28,10 +24,6 @@ import vivekDugar from '@/assets/images/leadership/vivek-dugar.webp'
  * The plates still render a marked placeholder at the same aspect when a photo
  * is missing, so a director joining tomorrow gets a reserved slot rather than a
  * broken card — set `photo: null` and the page holds the shape.
- *
- * No `remit` here: the board plates carry the title and the name only. What a
- * director is answerable for is a sentence that has to be approved by them, and
- * the page reads better without four paragraphs of it under four portraits.
  */
 export const BOARD = [
   {
@@ -63,12 +55,11 @@ export const BOARD = [
 /**
  * The desk-level team. This is who a customer actually reaches.
  *
- * Two entries for now — the real ones. The rest of the team is to be added from
- * the admin once the section for it is built, so this array is the shape that
- * feed has to produce: `slug`, `name`, `role`, `photo`, and optionally `remit`
- * and `since`. Both optional fields are omitted here rather than filled with a
- * guess; the row drops the line it has no value for and the band still sets
- * flat. Nothing on the page reads the length as a fixed number.
+ * Two entries for now — the real ones. The rest of the team is added from the
+ * admin, so this array is the shape that feed has to produce: `slug`, `name`,
+ * `role`, `photo`. A missing portrait is `null` rather than absent, and the
+ * panel holds a marked slot for it. Nothing on the page reads the length as a
+ * fixed number.
  */
 export const MANAGEMENT = [
   {

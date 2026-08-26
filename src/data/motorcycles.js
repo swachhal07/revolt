@@ -782,17 +782,30 @@ export const PRICED_MOTORCYCLES = MOTORCYCLES.filter((bike) => bike.priceNpr != 
  */
 const HERO_SLUGS = ['rvx', 'blazex']
 
-/** The heroes, in the order named above rather than in catalogue order. */
-export const HERO_MOTORCYCLES = HERO_SLUGS.map((slug) =>
-  MOTORCYCLES.find((bike) => bike.slug === slug),
-).filter(Boolean)
-
 /**
- * Everything else, in catalogue order. Derived by subtraction rather than listed
- * out, so a model added to `MOTORCYCLES` appears in the lineup without anybody
- * having to remember this line exists.
+ * The two bands the home page's lineup is set in, for any catalogue — the array
+ * below, or the one the admin's store answers with.
+ *
+ * A function rather than two constants because the lineup is no longer fixed at
+ * build time: `FeaturedBikes` reads the live collection and falls back to
+ * `MOTORCYCLES`, so the split has to run on whichever it got. It stays here
+ * rather than in the component because which bikes lead is a commercial
+ * decision about the catalogue, not a layout decision about the section.
+ *
+ * `rest` is derived by subtraction, so a model added in the back office appears
+ * in the rail without anybody naming it — and a hero is only ever a hero
+ * because its slug is listed above, never because it happens to be first.
  */
-export const REST_MOTORCYCLES = MOTORCYCLES.filter((bike) => !HERO_SLUGS.includes(bike.slug))
+export function splitLineup(bikes = MOTORCYCLES) {
+  return {
+    // In the order named above rather than in catalogue order.
+    heroes: HERO_SLUGS.map((slug) => bikes.find((bike) => bike.slug === slug)).filter(Boolean),
+    rest: bikes.filter((bike) => !HERO_SLUGS.includes(bike.slug)),
+  }
+}
+
+/** The build-time split of the bundled catalogue. */
+export const { heroes: HERO_MOTORCYCLES, rest: REST_MOTORCYCLES } = splitLineup(MOTORCYCLES)
 
 /**
  * The bike the home page's running-cost, charging, ride-mode and FAQ folds

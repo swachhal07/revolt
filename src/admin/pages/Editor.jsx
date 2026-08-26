@@ -7,6 +7,7 @@ import { FieldControl } from '../fields'
 import { PageHead } from '../Shell'
 import {
   Action,
+  Confirm,
   DATA,
   EDGE,
   Lamp,
@@ -17,18 +18,19 @@ import {
   PanelHead,
   State,
   Tag,
-  VOID,
 } from '../ui'
 
 /**
  * The editor for any record in any collection. One screen, driven by the
  * schema's `fields`.
  *
- * Every field is its own bay on the hairline grid rather than a control floating
- * in whitespace — a half-width field is one bay, a full-width one spans both,
- * and the rules between them are the gaps in the grid showing the void through.
- * That is what makes a twenty-field form read as a wiring schedule instead of a
- * scroll.
+ * The form is one page of prose-and-controls, divided by space. A half-width
+ * field takes one column, a full-width one spans both, and nothing is drawn
+ * between them — the grid used to be a hairline lattice with every field in its
+ * own bay, which read as a wiring schedule on graphite and as a spreadsheet on
+ * paper. Ruling a form twice over is what makes it look complicated: the labels
+ * and the wells are already the structure, and the gaps are enough to group
+ * them. What is left is a sheet you fill in.
  *
  * Two behaviours matter more than the layout:
  *
@@ -65,6 +67,9 @@ export default function Editor() {
   const [saveError, setSaveError] = useState('')
   const [dirty, setDirty] = useState(false)
   const [saved, setSaved] = useState(false)
+  // Whether the "leave without saving" question is up. Only ever true while
+  // `dirty` is — see `leave` below.
+  const [leaving, setLeaving] = useState(false)
 
   // Every id already taken, for the uniqueness check on a new record's slug. A
   // clash would otherwise surface from the adapter after the button already said
@@ -191,10 +196,24 @@ export default function Editor() {
     }
   }
 
+  // Leaving is two steps when there is something to lose. `leave` is what the
+  // controls call — the back link in the head and Discard on the foot — and it
+  // either goes or raises the question; `abandon` is the answer to it.
+  //
+  // The browser's own unload guard is still in place below and still looks like
+  // the browser, because that one is not ours to draw: closing the tab is the
+  // platform's event and the platform's dialog. This covers every exit the app
+  // itself owns, which is all of them but that.
   const leave = () => {
-    if (dirty && !window.confirm('Leave without saving? The changes on this sheet will be lost.')) {
+    if (dirty) {
+      setLeaving(true)
       return
     }
+    navigate(`/admin/${collection}`)
+  }
+
+  const abandon = () => {
+    setLeaving(false)
     navigate(`/admin/${collection}`)
   }
 
@@ -284,42 +303,36 @@ export default function Editor() {
         />
 
         {sections.map((section, position) => (
-          <section key={section.label ?? position}>
-            {/* The section rule. A twenty-field form with no divisions is a wall
-                you read in order and cannot re-enter — every visit starts at the
-                top. Named groups give it a table of contents you can navigate by
-                shape rather than by reading, and they are what turn "where is the
-                price" into a glance instead of a scan. */}
+          <section
+            key={section.label ?? position}
+            // One hairline per section, and it is the only rule inside the sheet.
+            // A twenty-field form with no divisions is a wall you read in order
+            // and cannot re-enter, so the groups stay — but a named group needs a
+            // line above it and nothing else. The first one is already sitting
+            // under the panel header.
+            className={cn('px-4 py-6 sm:px-6', position > 0 && cn('border-t', EDGE))}
+          >
             {section.label && (
-              <h3
-                className={cn(
-                  LEGEND,
-                  'flex items-center gap-2.5 border-y bg-rig-900 px-3.5 py-2.5 text-lume-400',
-                  // No top rule on the first one: the panel header is already
-                  // the line above it, and two rules 1px apart is a mistake.
-                  position === 0 && 'border-t-0',
-                  EDGE,
-                )}
-              >
-                <span className={cn(DATA, 'text-lume-600')}>
+              <h3 className={cn(LEGEND, 'mb-5 flex items-center gap-2.5 text-lume-600')}>
+                <span className={cn(DATA, 'text-lume-600/70')}>
                   {String(position + 1).padStart(2, '0')}
                 </span>
                 {section.label}
               </h3>
             )}
 
-            {/* The bay grid. Cells are sheet faces on the ground, so the rules
-                between fields are the gaps — no borders, and no doubled edge
-                anywhere the two columns meet. */}
-            <div className={cn('grid gap-px sm:grid-cols-2', VOID)}>
+            {/* Cells stretch to the row rather than sitting at the top of it, so
+                `Field` can put its label at the head and its well at the foot
+                and the two columns line up on both. */}
+            <div className="grid gap-x-8 gap-y-7 sm:grid-cols-2">
               {section.fields.map((field) => (
-                // The anchor `save` scrolls to. On the bay rather than the
-                // input, so the label and its help come into view with it.
+                // The anchor `save` scrolls to. On the whole field rather than
+                // the input, so the label and its help come into view with it.
                 <div
                   key={field.name}
                   id={`field-${field.name}`}
                   className={cn(
-                    'bg-rig-950 p-3.5',
+                    'min-w-0',
                     field.width === 'half' ? 'sm:col-span-1' : 'sm:col-span-2',
                   )}
                 >
@@ -348,6 +361,21 @@ export default function Editor() {
           </Action>
         </PanelFoot>
       </Panel>
+
+      {/* Red, and the only dialog in the tool that is: this one destroys work.
+          The commit is labelled with what it does rather than with "OK", so the
+          two halves of the question can be told apart without reading the
+          sentence above them — which is how a confirmation is actually used
+          after the third time you have seen it. */}
+      <Confirm
+        open={leaving}
+        title="Leave without saving"
+        detail={`The changes on this sheet have not been committed. Leaving now returns you to ${schema.label} and they are gone.`}
+        confirmLabel="Discard changes"
+        variant="danger"
+        onCancel={() => setLeaving(false)}
+        onConfirm={abandon}
+      />
     </>
   )
 }

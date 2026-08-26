@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import LineupMenu from '@/components/layout/LineupMenu'
 import { ChevronDown } from '@/components/ui/icons'
 import { NAV_LINKS, SITE } from '@/constants/site'
+import { useLineup } from '@/hooks/useCollection'
 import { MOTORCYCLES } from '@/data/motorcycles'
 import dugarLogo from '@/assets/images/dugar-logo.png'
 import revoltLogo from '@/assets/images/new-logo-1.png'
@@ -36,6 +37,11 @@ export default function Navbar() {
   const [sheetSection, setSheetSection] = useState(null)
   const { pathname } = useLocation()
   const isHome = pathname === '/'
+
+  // The phone sheet's model list, from the same store the desktop panel reads —
+  // the two are one menu at two widths, and a lineup that agreed on a laptop and
+  // disagreed on a phone would be the worst version of this.
+  const { bikes } = useLineup(MOTORCYCLES)
 
   const closeMenu = useCallback(() => setMenu(false), [])
   const keepMenu = useCallback(() => setMenu(true), [])
@@ -261,7 +267,7 @@ export default function Navbar() {
 
                   {expanded && (
                     <ul className="mt-1 mb-1 ml-3 flex flex-col border-l border-ink-900/10 pl-3">
-                      {MOTORCYCLES.map((bike) => (
+                      {bikes.map((bike) => (
                         <li key={bike.slug}>
                           <Link
                             to={`/motorcycles/${bike.slug}`}

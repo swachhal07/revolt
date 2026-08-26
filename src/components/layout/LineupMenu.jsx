@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, ChevronRight } from '@/components/ui/icons'
+import { useLineup } from '@/hooks/useCollection'
 import { MOTORCYCLES } from '@/data/motorcycles'
 import { cn } from '@/utils/cn'
 
@@ -32,6 +33,12 @@ const EASE = 'ease-[cubic-bezier(0.32,0.72,0,1)]'
 
 export default function LineupMenu({ id, open, onClose, onKeepOpen }) {
   const panel = useRef(null)
+
+  // The lineup the back office holds, with the bundled catalogue as the
+  // fallback — see [[useLineup]]. The panel is mounted at all times rather than
+  // on open, so this read happens once on load and the menu is already correct
+  // the first time it is pulled down.
+  const { bikes } = useLineup(MOTORCYCLES)
 
   // Escape closes from anywhere in the panel — including from a link deep in
   // the grid, which is where a keyboard reader will actually be when they
@@ -79,7 +86,7 @@ export default function LineupMenu({ id, open, onClose, onKeepOpen }) {
             need air between them or the second row reads as a reflection of
             the first. */}
         <ul className="grid grid-cols-3 gap-x-8 gap-y-12 xl:grid-cols-6 xl:gap-x-6">
-          {MOTORCYCLES.map((bike) => (
+          {bikes.map((bike) => (
             <li key={bike.slug}>
               <Link
                 to={`/motorcycles/${bike.slug}`}

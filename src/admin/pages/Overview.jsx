@@ -141,7 +141,7 @@ export default function Overview() {
                     className={cn(
                       GAUGE,
                       'text-[15px] text-lume-100 underline decoration-rig-700 decoration-1 underline-offset-[5px]',
-                      'transition-colors hover:text-volt-300 hover:decoration-volt-400/60',
+                      'transition-colors hover:text-volt-700 hover:decoration-volt-400/60',
                       'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-volt-400',
                     )}
                   >
@@ -166,8 +166,8 @@ export default function Overview() {
             <p>
               Image fields take a pasted URL and the upload button is disabled. To enable it, add an
               unsigned Cloudinary preset and set{' '}
-              <code className={cn(LEGEND, 'text-volt-300')}>VITE_CLOUDINARY_CLOUD_NAME</code> and{' '}
-              <code className={cn(LEGEND, 'text-volt-300')}>VITE_CLOUDINARY_UPLOAD_PRESET</code>.
+              <code className={cn(LEGEND, 'text-volt-700')}>VITE_CLOUDINARY_CLOUD_NAME</code> and{' '}
+              <code className={cn(LEGEND, 'text-volt-700')}>VITE_CLOUDINARY_UPLOAD_PRESET</code>.
             </p>
             <p>
               Unsigned specifically: a signed upload needs the API secret to build its signature,

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { cn } from '@/utils/cn'
 
 /**
@@ -238,6 +239,93 @@ export function PanelFoot({ className, children }) {
   )
 }
 
+/**
+ * A question the tool asks before it does something you cannot take back.
+ *
+ * A real `<dialog>`, opened with `showModal()`. That is the whole reason this is
+ * fifty lines and not two hundred: the platform gives the focus trap, the
+ * Escape key, the inert background and the top layer, and a hand-rolled modal
+ * gets those wrong in that order. Escape arrives as `cancel`, which is
+ * intercepted so the caller's `open` state and the element's own state cannot
+ * disagree — a dialog that closed itself while React still thought it was open
+ * would refuse to open a second time.
+ *
+ * The panel inside is the admin's own: a moulded face, a head with a lamp, and
+ * the commit on the foot, which is where every other panel in the tool puts it.
+ * The top layer changes where it paints, not what it inherits, so it takes the
+ * palette of wherever it is mounted — graphite when the rail raises it, paper
+ * when the worksheet does. That is the right way round: a question about the
+ * sheet you are writing on belongs to the sheet.
+ *
+ * Focus lands on Cancel, not on the commit. The reader opened this by pressing
+ * something; the safe half of the question should be what a reflexive Return
+ * hits.
+ */
+export function Confirm({
+  open,
+  title,
+  detail,
+  confirmLabel = 'Confirm',
+  variant = 'primary',
+  onConfirm,
+  onCancel,
+}) {
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const node = ref.current
+    if (!node) return
+
+    // Guarded both ways: `showModal` on an open dialog throws, and `close` on a
+    // shut one fires a stray `close` event.
+    if (open && !node.open) node.showModal()
+    if (!open && node.open) node.close()
+  }, [open])
+
+  return (
+    <dialog
+      ref={ref}
+      // Escape. Prevented so the close goes through the caller's state, which is
+      // the only thing that should be deciding whether this is open.
+      onCancel={(event) => {
+        event.preventDefault()
+        onCancel()
+      }}
+      // The backdrop is the dialog's own box outside the panel, so a click that
+      // lands on the element itself rather than on anything inside it is a click
+      // off the dialog. Same dismissal a click outside any of this tool's
+      // transient surfaces gets.
+      onClick={(event) => {
+        if (event.target === ref.current) onCancel()
+      }}
+      className={cn(
+        'm-auto w-[min(30rem,calc(100vw-2rem))] bg-transparent p-0 text-lume-100',
+        'backdrop:bg-black/70',
+        'open:animate-power-on',
+      )}
+    >
+      <Panel>
+        <PanelHead label={title} alarm={variant === 'danger'} />
+
+        {detail && (
+          <div className="px-3.5 py-4">
+            <p className={cn(PROSE, 'text-lume-400')}>{detail}</p>
+          </div>
+        )}
+
+        <PanelFoot className={cn(!detail && 'border-t-0')}>
+          <Action variant="bare" onClick={onCancel} autoFocus>
+            Cancel
+          </Action>
+          <Action variant={variant} arrow onClick={onConfirm}>
+            {confirmLabel}
+          </Action>
+        </PanelFoot>
+      </Panel>
+    </dialog>
+  )
+}
+
 /** A full-width hairline. The alarm variant marks an edge that matters. */
 export function Rule({ alarm }) {
   return (
@@ -279,21 +367,44 @@ export function TextArea({ invalid, rows = 3, className, ...props }) {
   )
 }
 
+/**
+ * A choice. `appearance-none` strips the native control down to the panel's own
+ * well, which also strips the one thing that said it was a choice at all — so
+ * the marker is drawn back on: a hairline gate at the right end of the well with
+ * a solid caret in it, which is the same construction as the slug field's
+ * Generate button and reads as part of the moulding rather than as an icon.
+ *
+ * `pointer-events-none` on the gate so the whole well stays one click target.
+ */
 export function Select({ options = [], invalid, className, ...props }) {
   return (
-    <select
-      className={cn(CONTROL, LEGEND, 'h-9 py-0 pr-7', invalid && INVALID, className)}
-      {...props}
-    >
-      {options.map((option) => (
-        // The native menu is drawn by the OS and inherits none of this, so the
-        // options are given the panel's own colours explicitly — otherwise a
-        // dark control opens a white list on every platform but macOS.
-        <option key={option.value} value={option.value} className="bg-rig-900 text-lume-100">
-          {option.label}
-        </option>
-      ))}
-    </select>
+    <div className="relative">
+      <select
+        className={cn(CONTROL, LEGEND, 'h-9 cursor-pointer py-0 pr-11', invalid && INVALID, className)}
+        {...props}
+      >
+        {options.map((option) => (
+          // The native menu is drawn by the OS and inherits none of this, so the
+          // options are given the panel's own colours explicitly — otherwise a
+          // dark control opens a white list on every platform but macOS.
+          <option key={option.value} value={option.value} className="bg-rig-900 text-lume-100">
+            {option.label}
+          </option>
+        ))}
+      </select>
+
+      <span
+        aria-hidden="true"
+        className={cn(
+          'pointer-events-none absolute inset-y-px right-px flex w-8 items-center justify-center border-l',
+          EDGE,
+        )}
+      >
+        <svg viewBox="0 0 8 5" className="w-2 fill-lume-600">
+          <polygon points="0,0 8,0 4,5" />
+        </svg>
+      </span>
+    </div>
   )
 }
 
@@ -306,14 +417,22 @@ export function Select({ options = [], invalid, className, ...props }) {
  *
  * Help sits above the control. Help underneath is read after the field has been
  * filled in, which is too late to be help.
+ *
+ * The consequence is that two fields side by side have their labels on one line
+ * and their wells on two different ones, because one of them has three lines of
+ * help and the other has none — and a form's wells are the strongest horizontal
+ * line it has. So the field is a full-height column with the control pushed to
+ * the foot of it: labels align at the top of the row, wells align at the bottom,
+ * and the slack from the uneven help sits in the middle where nothing is lining
+ * up with anything anyway.
  */
 export function Field({ label, help, error, required, htmlFor, children, className }) {
   return (
-    <div className={cn('min-w-0', className)}>
+    <div className={cn('flex h-full min-w-0 flex-col', className)}>
       <label htmlFor={htmlFor} className={cn(LEGEND, 'flex items-baseline gap-1.5 text-lume-100')}>
         {label}
         {required && (
-          <span aria-hidden="true" title="Required" className="text-volt-400">
+          <span aria-hidden="true" title="Required" className="text-volt-700">
             •
           </span>
         )}
@@ -321,7 +440,7 @@ export function Field({ label, help, error, required, htmlFor, children, classNa
 
       {help && <p className={cn(PROSE, 'mt-1.5 max-w-[62ch] text-lume-600')}>{help}</p>}
 
-      <div className="mt-2">{children}</div>
+      <div className="mt-auto pt-2">{children}</div>
 
       {error && (
         <p role="alert" className={cn(LEGEND, 'mt-2 flex items-center gap-2 text-brand-400')}>
@@ -337,7 +456,7 @@ export function Field({ label, help, error, required, htmlFor, children, classNa
 
 const TAG_TONES = {
   neutral: 'border-rig-700 text-lume-400',
-  live: 'border-volt-400/40 bg-volt-400/10 text-volt-300',
+  live: 'border-volt-400/40 bg-volt-400/10 text-volt-700',
   draft: 'border-rig-700 bg-rig-850 text-lume-600',
   warn: 'border-brand-500/50 bg-brand-500/10 text-brand-400',
 }

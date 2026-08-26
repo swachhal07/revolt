@@ -215,7 +215,7 @@ export const COLLECTIONS = {
         {
           value: 'management',
           label: 'Management',
-          note: 'Runs the distributorship day to day. The tier that carries a remit.',
+          note: 'Runs the distributorship day to day. The desks a customer reaches.',
         },
       ],
     },
@@ -226,7 +226,6 @@ export const COLLECTIONS = {
     groups: [
       { label: 'Identity', fields: ['name', 'slug', 'role', 'tier', 'order'] },
       { label: 'Portrait', fields: ['photo'] },
-      { label: 'Accountability', fields: ['remit', 'since'] },
     ],
     fields: [
       { name: 'name', label: 'Name', type: 'text', required: true, width: 'half' },
@@ -257,7 +256,7 @@ export const COLLECTIONS = {
           { value: 'board', label: 'Board' },
           { value: 'management', label: 'Management' },
         ],
-        help: 'The board signs for the group and is listed by title alone. Management is who a customer actually reaches, and only that tier prints a remit.',
+        help: 'The board signs for the group. Management is who a customer actually reaches — the two tiers are two blocks on the page, and this is what files a person under one of them.',
       },
       {
         name: 'order',
@@ -271,19 +270,6 @@ export const COLLECTIONS = {
         label: 'Portrait',
         type: 'image',
         help: 'Leave empty and the page holds a marked slot at the same aspect rather than closing the gap, so a director joining tomorrow has somewhere to land.',
-      },
-      {
-        name: 'remit',
-        label: 'Remit',
-        type: 'textarea',
-        help: 'What this person is answerable for, not a biography. A customer wants to know who owns the problem when their bike is off the road. Management only, and only once they have approved the wording.',
-      },
-      {
-        name: 'since',
-        label: 'With the group since',
-        type: 'text',
-        width: 'half',
-        help: 'A year. Optional, and the row drops the line when it is empty.',
       },
     ],
   },

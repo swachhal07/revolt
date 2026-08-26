@@ -32,8 +32,10 @@ import { cn } from '@/utils/cn'
  * is on every other page and in the footer of this one.
  *
  * DATA STATUS — every name and title on both tiers is real. The management
- * roster is the two confirmed people; the rest goes in from the admin once that
- * section exists. No remit is approved yet. See `data/leadership.js`.
+ * roster is the two confirmed people; the rest goes in from the admin. A panel
+ * is a name, a title and a portrait, and nothing else: the remit and
+ * in-post-since lines this band once carried are gone, because the copy for
+ * them was never going to be approved. See `data/leadership.js`.
  */
 
 const EASE = 'ease-[cubic-bezier(0.32,0.72,0,1)]'
@@ -246,7 +248,7 @@ export default function Leadership() {
           missing. So the tier is set as panels on black — the only dark band
           between two white ones — and the thing that fills the panel is the
           name at poster scale with the initial standing behind it, because the
-          name *is* the content until portraits and remits arrive.
+          name *is* the content.
 
           Three deliberate moves:
 
@@ -262,9 +264,8 @@ export default function Leadership() {
              the press pass the launch gate uses. The row version filled to ink;
              on a black band the same gesture has to run the other way.
 
-          Everything the admin will send is already wired: `photo` swaps the
-          ghost initial for a plate, and `remit`/`since` set under the role when
-          they exist. Nothing here is sized to a fixed roster length. */}
+          Everything the admin sends is already wired: `photo` swaps the ghost
+          initial for a plate. Nothing here is sized to a fixed roster length. */}
       <section
         id="management"
         ref={managementRef}
@@ -443,32 +444,6 @@ export default function Leadership() {
                       >
                         {person.role}
                       </p>
-
-                      {person.remit && (
-                        <p
-                          className={cn(
-                            'mt-5 max-w-[38ch] text-[15.5px] leading-[1.7] text-chalk-400 text-pretty',
-                            'transition-colors duration-500',
-                            EASE,
-                            !person.photo && 'group-hover:text-ink-800',
-                          )}
-                        >
-                          {person.remit}
-                        </p>
-                      )}
-
-                      {person.since && (
-                        <p
-                          className={cn(
-                            LABEL,
-                            'mt-5 text-white/30 transition-colors duration-500',
-                            EASE,
-                            !person.photo && 'group-hover:text-ink-900/40',
-                          )}
-                        >
-                          In post since {person.since}
-                        </p>
-                      )}
                     </div>
                   </div>
                 </div>

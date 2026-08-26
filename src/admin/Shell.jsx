@@ -1,9 +1,10 @@
+import { useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { cn } from '@/utils/cn'
 import { COLLECTIONS, COLLECTION_KEYS } from './data/schema'
 import { BACKEND_NAME, IS_LOCAL_BACKEND } from './data'
 import { signOut } from './data/session'
-import { DATA, EDGE, GAUGE, Lamp, LEGEND, PROSE, TickRail } from './ui'
+import { Confirm, DATA, EDGE, GAUGE, Lamp, LEGEND, TickRail } from './ui'
 
 /**
  * The admin's chrome: the binnacle the panels are mounted in.
@@ -43,9 +44,13 @@ export default function Shell({ onSignOut, children }) {
       <div className="relative flex min-h-dvh flex-col lg:flex-row">
         <Rail onSignOut={onSignOut} />
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          {IS_LOCAL_BACKEND && <LocalNotice />}
-
+        {/* The working area is the sheet, and the rail is not. `sheet` re-points
+            the palette to its light end for this column only, so every panel
+            inside it is a white face on a grey substrate while the housing it is
+            mounted in stays the dark moulding it was. Same components, same
+            tokens — the switch legend is still lit type on graphite, and what
+            you read and write on is paper clipped into it. */}
+        <div className="sheet relative flex min-w-0 flex-1 flex-col bg-rig-990">
           {/* Hung off the rail rather than centred in what is left of the
               viewport. A centred measure is right for a document and wrong for a
               console: it opens a gap beside the nav that grows with the screen,
@@ -107,7 +112,13 @@ function Rail({ onSignOut }) {
         </div>
       </div>
 
-      <TickRail className="mx-5 hidden opacity-60 lg:block" />
+      {/* Inset by a padded wrapper rather than by margins on the rail itself:
+          the scale is `w-full`, and `w-full` plus `mx-5` is 100% of the housing
+          *plus* 40px, so the graduation ran 20px out past the bezel and into the
+          worksheet beside it. Invisible while both sides were graphite. */}
+      <div className="hidden px-5 lg:block">
+        <TickRail className="opacity-60" />
+      </div>
 
       {/* Channels, numbered. The number is not ornament: these are the tool's
           fixed inputs, they never reorder, and a numbered switch legend is how
@@ -182,52 +193,50 @@ function RailLink({ to, index, end, children }) {
   )
 }
 
-function SignOut({ onSignOut }) {
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        signOut()
-        onSignOut()
-      }}
-      className={cn(
-        LEGEND,
-        'text-lume-600 transition-colors hover:text-brand-400',
-        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-volt-400',
-      )}
-    >
-      Sign out
-    </button>
-  )
-}
-
 /**
- * The honest notice, and the one standing fault the cluster reports.
+ * Sign out, asked first.
  *
- * Not dismissible for as long as the local adapter is what answers. Somebody
- * spending an afternoon writing three model pages needs to know before they
- * start that the work is in this browser and not on the site — a notice they
- * closed on Tuesday cannot tell them that on Thursday.
+ * The control sits two lines under the last channel in the rail and one line
+ * under "View site", which is a link people click on purpose — so the miss is
+ * cheap to make and expensive to pay for: it drops the session and returns the
+ * whole tool to the login screen, and anything typed into an open editor and not
+ * committed goes with it.
+ *
+ * The question is the tool's own panel rather than the browser's dialog — see
+ * [[Confirm]]. `window.confirm` was doing this job for an afternoon and reads as
+ * what it is: a box captioned with the hostname, in the browser's type, over an
+ * interface built to look like an instrument.
  */
-function LocalNotice() {
+function SignOut({ onSignOut }) {
+  const [asking, setAsking] = useState(false)
+
   return (
-    <div
-      role="status"
-      className={cn(
-        'flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b bg-brand-900/20 px-4 py-2.5 sm:px-8',
-        'border-b-brand-500/40',
-      )}
-    >
-      <span className={cn(LEGEND, 'flex items-center gap-2 text-brand-400')}>
-        <Lamp alarm />
-        Local data
-      </span>
-      <p className={cn(PROSE, 'text-lume-400')}>
-        Edits save to this browser only. They do not reach the live site, and another device will
-        not see them.
-      </p>
-      <span className={cn(LEGEND, 'text-lume-600')}>src/admin/data/index.js</span>
-    </div>
+    <>
+      <button
+        type="button"
+        onClick={() => setAsking(true)}
+        className={cn(
+          LEGEND,
+          'text-lume-600 transition-colors hover:text-brand-400',
+          'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-volt-400',
+        )}
+      >
+        Sign out
+      </button>
+
+      <Confirm
+        open={asking}
+        title="Sign out"
+        detail="You will be returned to the login screen. Anything typed into an open editor and not saved is lost; everything already committed stays where it is."
+        confirmLabel="Sign out"
+        onCancel={() => setAsking(false)}
+        onConfirm={() => {
+          setAsking(false)
+          signOut()
+          onSignOut()
+        }}
+      />
+    </>
   )
 }
 
@@ -249,7 +258,7 @@ export function PageHead({ eyebrow, title, count, children }) {
           <h1 className={cn(GAUGE, 'flex items-baseline gap-4 text-[clamp(2rem,5vw,3.4rem)]')}>
             <span className="min-w-0 break-words">{title}</span>
             {count != null && (
-              <data className={cn(DATA, 'text-[0.38em] font-normal tracking-normal text-volt-400')}>
+              <data className={cn(DATA, 'text-[0.38em] font-normal tracking-normal text-volt-700')}>
                 {String(count).padStart(3, '0')}
               </data>
             )}

@@ -285,7 +285,7 @@ export default function Collection() {
                               className={cn(
                                 GAUGE,
                                 'text-[14px] text-lume-100 underline decoration-transparent decoration-1 underline-offset-[5px]',
-                                'transition-colors group-hover:decoration-rig-700 hover:text-volt-300',
+                                'transition-colors group-hover:decoration-rig-700 hover:text-volt-700',
                                 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-volt-400',
                               )}
                             >

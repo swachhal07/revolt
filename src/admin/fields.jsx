@@ -201,43 +201,14 @@ function ImageInput({ value, onChange, ...props }) {
 
   return (
     <div className="flex flex-col gap-2.5">
+      {/* The well first, the plate after it. With the plate leading, this was the
+          one field in the form whose input did not start where its own label
+          does — every other well in the section began at the section's left edge
+          and this one began 82px in, which is the kind of misalignment you see
+          before you can name it. The preview reads just as well at the end of
+          the row, and its 4.5rem is almost exactly the height of the well and
+          the buttons under it, so the two sides of the row close together. */}
       <div className="flex items-start gap-2.5">
-        {/* Checkerboard behind the plate: the studio cutouts are transparent
-            PNGs, and on a flat panel a cutout is indistinguishable from a
-            missing image. Ink squares, because this field only ever renders
-            inside the worksheet — the one light surface in the tool — and the
-            cutouts are shot for white, so the check has to be what darkens. */}
-        <div
-          className={cn(
-            'grid size-[4.5rem] shrink-0 place-items-center rounded-[2px] border bg-rig-900 inset-well',
-            EDGE,
-          )}
-          style={{
-            backgroundImage:
-              'linear-gradient(45deg, rgba(0,0,0,0.06) 25%, transparent 25% 75%, rgba(0,0,0,0.06) 75%), linear-gradient(45deg, rgba(0,0,0,0.06) 25%, transparent 25% 75%, rgba(0,0,0,0.06) 75%)',
-            backgroundSize: '10px 10px',
-            backgroundPosition: '0 0, 5px 5px',
-          }}
-        >
-          {value ? (
-            <img
-              src={thumbUrl(value, 160)}
-              alt=""
-              className="size-full object-contain"
-              // A pasted URL can simply be wrong, and a broken-image glyph says
-              // less than an empty plate does.
-              onError={(event) => {
-                event.currentTarget.style.visibility = 'hidden'
-              }}
-              onLoad={(event) => {
-                event.currentTarget.style.visibility = 'visible'
-              }}
-            />
-          ) : (
-            <span className={cn(LEGEND, 'text-rig-700')}>Nil</span>
-          )}
-        </div>
-
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <TextInput
             {...props}
@@ -270,6 +241,42 @@ function ImageInput({ value, onChange, ...props }) {
             )}
             {!canUpload && <span className={cn(LEGEND, 'text-lume-600')}>URL only</span>}
           </div>
+        </div>
+
+        {/* Checkerboard behind the plate: the studio cutouts are transparent
+            PNGs, and on a flat panel a cutout is indistinguishable from a
+            missing image. Ink squares, because this field only ever renders
+            inside the worksheet — the one light surface in the tool — and the
+            cutouts are shot for white, so the check has to be what darkens. */}
+        <div
+          className={cn(
+            'grid size-[4.5rem] shrink-0 place-items-center overflow-hidden rounded-[2px] border bg-rig-900 inset-well',
+            EDGE,
+          )}
+          style={{
+            backgroundImage:
+              'linear-gradient(45deg, rgba(0,0,0,0.06) 25%, transparent 25% 75%, rgba(0,0,0,0.06) 75%), linear-gradient(45deg, rgba(0,0,0,0.06) 25%, transparent 25% 75%, rgba(0,0,0,0.06) 75%)',
+            backgroundSize: '10px 10px',
+            backgroundPosition: '0 0, 5px 5px',
+          }}
+        >
+          {value ? (
+            <img
+              src={thumbUrl(value, 160)}
+              alt=""
+              className="max-h-full max-w-full object-contain"
+              // A pasted URL can simply be wrong, and a broken-image glyph says
+              // less than an empty plate does.
+              onError={(event) => {
+                event.currentTarget.style.visibility = 'hidden'
+              }}
+              onLoad={(event) => {
+                event.currentTarget.style.visibility = 'visible'
+              }}
+            />
+          ) : (
+            <span className={cn(LEGEND, 'text-rig-700')}>Nil</span>
+          )}
         </div>
       </div>
 
@@ -480,7 +487,7 @@ function ObjectsInput({ field, value, onChange }) {
                     own — a colourway can be renamed, a body block never has a name
                     — and the position is what matters anyway, since the first entry
                     is the one the site leads on. */}
-                <span className={cn(DATA, 'text-volt-400')}>
+                <span className={cn(DATA, 'text-volt-700')}>
                   {String(index + 1).padStart(2, '0')}
                 </span>
                 {field.addLabel && <span>{row.name || row.title || row.type || '—'}</span>}
@@ -503,12 +510,15 @@ function ObjectsInput({ field, value, onChange }) {
               </span>
             </div>
 
-            <div className={cn('grid gap-px sm:grid-cols-2', VOID)}>
+            {/* Space between the subfields, like the form around it. A row of a
+                repeater is already fenced by its own header and border; ruling
+                the inside of it as well is a third box around one control. */}
+            <div className="grid gap-x-6 gap-y-5 px-3 py-4 sm:grid-cols-2">
               {field.subfields.map((sub) => (
                 <div
                   key={sub.name}
                   className={cn(
-                    'bg-rig-950 p-2.5',
+                    'min-w-0',
                     sub.width === 'half' ? 'sm:col-span-1' : 'sm:col-span-2',
                   )}
                 >

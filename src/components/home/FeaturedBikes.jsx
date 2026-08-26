@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import Container from '@/components/ui/Container'
 import { ChevronRight } from '@/components/ui/icons'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
-import { HERO_MOTORCYCLES, REST_MOTORCYCLES } from '@/data/motorcycles'
+import { useLineup } from '@/hooks/useCollection'
+import { MOTORCYCLES, splitLineup } from '@/data/motorcycles'
 import { cn } from '@/utils/cn'
 
 /**
@@ -194,6 +195,18 @@ export default function FeaturedBikes() {
   // The heading and then the columns, left to right — see [[useScrollReveal]].
   const ref = useScrollReveal()
   const trackRef = useRef(null)
+
+  // The catalogue the back office holds, falling back to the bundled one, split
+  // into the two bands by slug — see [[splitLineup]]. A model added in the admin
+  // arrives in `rest`, which is the rail; nothing promotes itself to the top row.
+  //
+  // The store answers a frame or two after mount, so this list can change once
+  // under a laid-out rail. Everything downstream is keyed to it: the cards are
+  // memoised on `rest`, and `readGeometry` counts it — so the stop positions and
+  // the indicator are re-derived when it swaps rather than describing the
+  // catalogue that was there a moment ago.
+  const { bikes } = useLineup(MOTORCYCLES)
+  const { heroes, rest } = useMemo(() => splitLineup(bikes), [bikes])
   // Where the rail is, counted in stopping positions rather than in bikes.
   // The distinction is the whole indicator: with three bikes on screen the
   // leftmost one can only ever be the first of four, so a mark that tracked
@@ -231,10 +244,10 @@ export default function FeaturedBikes() {
       // grid above and never scroll — so this counts that list, not the whole
       // catalogue. Counting all six here would give the indicator two positions
       // the rail cannot reach and leave the clock walking into dead travel.
-      positions: Math.max(1, REST_MOTORCYCLES.length - perView + 1),
+      positions: Math.max(1, rest.length - perView + 1),
     }
     return geometry.current
-  }, [])
+  }, [rest.length])
 
   // The scroll handler, and so the hottest path in the section: arithmetic on a
   // cached pitch and nothing else.
@@ -599,7 +612,7 @@ export default function FeaturedBikes() {
   // update rather than touching the row.
   const cards = useMemo(
     () =>
-      REST_MOTORCYCLES.map((bike) => (
+      rest.map((bike) => (
         <BikeCard
           key={bike.slug}
           bike={bike}
@@ -613,7 +626,7 @@ export default function FeaturedBikes() {
           )}
         />
       )),
-    [],
+    [rest],
   )
 
   return (
@@ -672,7 +685,7 @@ export default function FeaturedBikes() {
             promotion is legible without either row looking like a different
             design. */}
         <div className="mt-16 grid grid-cols-1 gap-16 sm:mt-20 sm:grid-cols-2 lg:gap-24">
-          {HERO_MOTORCYCLES.map((bike, i) => (
+          {heroes.map((bike, i) => (
             <BikeCard key={bike.slug} bike={bike} featured eager={i === 0} />
           ))}
         </div>
@@ -748,7 +761,7 @@ export default function FeaturedBikes() {
             const i = windowStart + slot
             // A position is named for the bike that leads it, which is what a
             // reader sees on the left of the row when they land on it.
-            const bike = REST_MOTORCYCLES[i]
+            const bike = rest[i]
             if (!bike) return null
 
             return (

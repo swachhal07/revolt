@@ -69,6 +69,24 @@ export function useCollection(name, fallback = []) {
 }
 
 /**
+ * The catalogue, as the public pages want it: one array in showroom order.
+ *
+ * `motorcycles` has no `sortBy` in the schema, so the store answers in its own
+ * order and that order is the showroom's — the same contract the bundled array
+ * has always had, where position 0 is the bike a visitor meets first.
+ *
+ * Everything the lineup derives from this is keyed by slug, never by index (see
+ * `splitLineup` and `FLAGSHIP` in `data/motorcycles`), so a model added in the
+ * back office lands in the rail rather than silently promoting itself to a
+ * hero or to the bike the home page quotes its figures from.
+ */
+export function useLineup(fallback) {
+  const { records, ready } = useCollection('motorcycles', null)
+
+  return { bikes: records ?? fallback, ready }
+}
+
+/**
  * The leadership roster, split into the two tiers the page prints.
  *
  * The admin stores both in one collection with a `tier` field, because they are
