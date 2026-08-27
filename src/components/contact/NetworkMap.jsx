@@ -48,13 +48,18 @@ import { cn } from '@/utils/cn'
 
 const META = 'text-[11px] font-semibold tracking-[0.2em] uppercase'
 
-// CARTO's basemaps are free for reasonable volumes and require the attribution
-// carried below. `@2x` on a retina panel: the label type is the point of this
-// basemap and it renders soft at 1x.
-const TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+// Esri's light gray canvas: the same near-white, low-chroma basemap Positron
+// gave us, but served without a key — CARTO now stamps "API KEY REQUIRED"
+// across anonymous tiles. Free for this kind of use against the attribution
+// carried below. The service tops out at z16, which is far past anything the
+// fitted country view reaches.
+const TILES =
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}'
+
+const TILE_MAX_ZOOM = 16
 
 const ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  '&copy; <a href="https://www.esri.com/">Esri</a>, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 
 // Padding on the fitted bounds, and a ceiling on the zoom. The ceiling only
 // matters if the network ever shrinks to one location — a bounding box of zero
@@ -111,12 +116,10 @@ export default function NetworkMap() {
 
     L.control.zoom({ position: 'topright' }).addTo(instance)
 
-    // `detectRetina` is what fills the `{r}` in the tile URL with `@2x`. Without
-    // it the placeholder resolves to nothing and the basemap's type — the whole
-    // reason for choosing Positron — renders soft on a retina panel.
-    L.tileLayer(TILES, { attribution: ATTRIBUTION, detectRetina: true, maxZoom: 19 }).addTo(
-      instance,
-    )
+    // No `detectRetina` here: Esri serves one resolution per tile, and Leaflet
+    // emulates retina by requesting a zoom deeper — which this service does not
+    // have above z16, so the emulation buys blank tiles rather than sharp type.
+    L.tileLayer(TILES, { attribution: ATTRIBUTION, maxZoom: TILE_MAX_ZOOM }).addTo(instance)
 
     const points = NETWORK_POINTS.filter((place) => place.coords)
 
