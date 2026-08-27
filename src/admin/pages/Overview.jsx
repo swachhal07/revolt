@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/utils/cn'
 import { backend } from '../data'
-import { canUpload } from '../data/media'
 import { COLLECTIONS, COLLECTION_KEYS } from '../data/schema'
 import { PageHead } from '../Shell'
 import {
@@ -158,24 +157,6 @@ export default function Overview() {
           </ul>
         )}
       </Panel>
-
-      {!canUpload && (
-        <Panel className="animate-power-on mt-6" style={{ animationDelay: '280ms' }}>
-          <PanelHead label="Image uploading" alarm unit="Not configured" />
-          <div className={cn(PROSE, 'space-y-2.5 px-3 py-3.5')}>
-            <p>
-              Image fields take a pasted URL and the upload button is disabled. To enable it, add an
-              unsigned Cloudinary preset and set{' '}
-              <code className={cn(LEGEND, 'text-volt-700')}>VITE_CLOUDINARY_CLOUD_NAME</code> and{' '}
-              <code className={cn(LEGEND, 'text-volt-700')}>VITE_CLOUDINARY_UPLOAD_PRESET</code>.
-            </p>
-            <p>
-              Unsigned specifically: a signed upload needs the API secret to build its signature,
-              and a secret in a static frontend is public.
-            </p>
-          </div>
-        </Panel>
-      )}
     </>
   )
 }

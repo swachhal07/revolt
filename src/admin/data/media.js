@@ -38,8 +38,14 @@
  * function that knows how an image gets uploaded.
  */
 
-const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
-const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+// Defaulted, not required. `.env` is gitignored, so a deploy host that has not
+// been given these builds with uploading silently disabled — which is what
+// happened. Neither value is a secret: both are inlined into the bundle on every
+// build anyway, so a default here changes nothing about exposure and stops the
+// admin losing its upload button on any host that has not been configured by
+// hand. The variables still override, per-machine.
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dczefv79t'
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'revolt-admin'
 
 const USE_API = (import.meta.env.VITE_ADMIN_BACKEND ?? 'local') === 'http'
 
