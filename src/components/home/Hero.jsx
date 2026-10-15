@@ -216,26 +216,32 @@ export default function Hero() {
           frame of — offered over a photograph it would be a button that
           opens the wrong thing.
 
-          Bottom-right, and drawn entirely in hairlines — the pill, the disc
-          and the type all outline, nothing filled. The filled pill read as a
-          second primary action on a hero that has none, and the red disc
-          inside it put the site's accent on a control rather than on the
-          thing the control is for. What is left is legible against footage
-          because of its edge, not because of a panel behind it, which is how
-          the rest of the site draws on dark ground. It sits in the fade that
-          already darkens the bottom strip.
+          Drawn entirely in hairlines — the pill, the disc and the type all
+          outline, nothing filled. The filled pill read as a second primary
+          action on a hero that has none, and the red disc inside it put the
+          site's accent on a control rather than on the thing the control is
+          for. What is left is legible against footage because of its edge, not
+          because of a panel behind it, which is how the rest of the site draws
+          on dark ground. It sits in the fade that already darkens the bottom
+          strip.
 
-          Right rather than left: the left edge is where the eye enters the
-          frame, and on the model pages that corner is left clear. It is the one
-          affordance on the hero that is worth more on a phone than on a
-          desktop: a 16:9 film in a portrait window loses both ends of every
-          shot, and this is where that gets handed back. */}
+          Bottom-left, and that corner is no longer a preference. It sat right
+          for a while, on the argument that the left edge is where the eye
+          enters the frame — then the Omni chat widget took the bottom-right
+          corner and parked its bubble on top of this one. A third-party
+          launcher is fixed to the viewport and we do not control where it
+          lands, so the rule is simply that nothing of ours shares that corner
+          with it.
+
+          It is the one affordance on the hero that is worth more on a phone
+          than on a desktop: a 16:9 film in a portrait window loses both ends
+          of every shot, and this is where that gets handed back. */}
       {index === 0 ? (
         <button
           type="button"
           onClick={() => setFilm(true)}
           className={cn(
-            'group absolute right-6 bottom-8 z-10 inline-flex items-center gap-3 rounded-full lg:right-10 lg:bottom-10',
+            'group absolute bottom-8 left-6 z-10 inline-flex items-center gap-3 rounded-full lg:bottom-10 lg:left-10',
             'border border-white/30 py-3 pr-5 pl-4 text-white',
             'transition-[border-color,background-color] duration-300 hover:border-white hover:bg-white/10',
             'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white',

@@ -54,7 +54,7 @@ const LEGAL_LINKS = [
 // own credit, not site navigation, and nothing else links to it.
 const DEVELOPER = {
   name: 'Swachhal Lamsal',
-  href: 'https://swachhalportfolio.vercel.app/',
+  href: 'https://portfolio1-chi-wheat.vercel.app/',
 }
 
 // The tracked-out micro-label. Used for exactly three words in this file — it
