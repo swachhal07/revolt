@@ -40,5 +40,15 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    
+    <script>
+      ;(function () {
+        var script = document.createElement('script')
+        script.src = 'https://backend-omni.mvdugar.com/widget.js'
+        script.setAttribute('data-chatbot-key', 'c7ed83c34e034965013d691f419c9539')
+        script.async = true
+        document.head.appendChild(script)
+      })()
+    </script>
   </body>
 </html>
